@@ -10,6 +10,7 @@
 		246139BE684854A9641AF721 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531CDC431536CC4E079ED114 /* MenuBarController.swift */; };
 		650C547D3514DB705AD01694 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A96CA9C1606F66AAF0C6F77C /* SettingsView.swift */; };
 		6715780618A85FEA31EBC87C /* TymelineCore in Frameworks */ = {isa = PBXBuildFile; productRef = F4514F7307ED8D60D4E33144 /* TymelineCore */; };
+		71CA4DDE5A4E973AA989AD6C /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3294E59908DD6A00183B4C4 /* AppCoordinator.swift */; };
 		A5FA1C5B88596E6DCF9C8DD5 /* TymelineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */; };
 		F1E1AA246E9493A19389E75A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC7C2AF3EFAA04522A3B86D /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
@@ -21,6 +22,7 @@
 		8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TymelineApp.swift; sourceTree = "<group>"; };
 		A96CA9C1606F66AAF0C6F77C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		DFC7C2AF3EFAA04522A3B86D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		E3294E59908DD6A00183B4C4 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +43,14 @@
 				4D41519FB8D819E96136B6D3 /* tymeline.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		37A70DBD5EEE0A3939097C15 /* Coordinator */ = {
+			isa = PBXGroup;
+			children = (
+				E3294E59908DD6A00183B4C4 /* AppCoordinator.swift */,
+			);
+			path = Coordinator;
 			sourceTree = "<group>";
 		};
 		5CA47722C73AE50D38F23A1A /* App */ = {
@@ -81,6 +91,7 @@
 			isa = PBXGroup;
 			children = (
 				5CA47722C73AE50D38F23A1A /* App */,
+				37A70DBD5EEE0A3939097C15 /* Coordinator */,
 				609959C910ADB1110F7C0845 /* MenuBar */,
 				894ECE337E57203EF3356A5E /* Settings */,
 			);
@@ -167,6 +178,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				71CA4DDE5A4E973AA989AD6C /* AppCoordinator.swift in Sources */,
 				F1E1AA246E9493A19389E75A /* AppDelegate.swift in Sources */,
 				246139BE684854A9641AF721 /* MenuBarController.swift in Sources */,
 				650C547D3514DB705AD01694 /* SettingsView.swift in Sources */,

@@ -17,6 +17,36 @@ public enum WorkspaceControllerError: Error, LocalizedError, Equatable {
     }
 }
 
+/// Immutable snapshot of a WorkspaceController's live state. Safe to bridge
+/// from actor isolation to @Observable view-model code.
+public struct WorkspaceSnapshot: Sendable, Equatable {
+    public let workspaceId: UUID
+    public let workspaceName: String
+    public let runningIssueId: String?
+    public let runningIssueIdentifier: String?
+    public let runningIssueTitle: String?
+    public let lastErrorDescription: String?
+    public let lastPollAt: Date?
+
+    public init(
+        workspaceId: UUID,
+        workspaceName: String,
+        runningIssueId: String?,
+        runningIssueIdentifier: String?,
+        runningIssueTitle: String?,
+        lastErrorDescription: String?,
+        lastPollAt: Date?
+    ) {
+        self.workspaceId = workspaceId
+        self.workspaceName = workspaceName
+        self.runningIssueId = runningIssueId
+        self.runningIssueIdentifier = runningIssueIdentifier
+        self.runningIssueTitle = runningIssueTitle
+        self.lastErrorDescription = lastErrorDescription
+        self.lastPollAt = lastPollAt
+    }
+}
+
 /// Orchestrates one workspace's poll loop:
 ///   LinearClient.fetchAssignedIssues
 ///     -> TransitionDetector.detect
@@ -39,6 +69,8 @@ public actor WorkspaceController {
     private let clockifyClient: ClockifyClient
     private let detector: TransitionDetector
     private let controller: AutoTimerController
+    private var onSnapshotChange: (@Sendable (WorkspaceSnapshot) -> Void)?
+    private var runningIssueMetadata: (identifier: String, title: String)?
 
     public init(
         workspace: Workspace,
@@ -52,6 +84,25 @@ public actor WorkspaceController {
         self.clockifyClient = clockifyClient
         self.detector = detector
         self.controller = controller
+    }
+
+    /// Install (or replace) a handler invoked after every poll, including
+    /// failed ones. The handler is `@Sendable` so it can hop to MainActor for
+    /// UI updates.
+    public func setSnapshotHandler(_ handler: (@Sendable (WorkspaceSnapshot) -> Void)?) {
+        self.onSnapshotChange = handler
+    }
+
+    public func snapshot() -> WorkspaceSnapshot {
+        WorkspaceSnapshot(
+            workspaceId: workspace.id,
+            workspaceName: workspace.name,
+            runningIssueId: currentRunningIssueId,
+            runningIssueIdentifier: runningIssueMetadata?.identifier,
+            runningIssueTitle: runningIssueMetadata?.title,
+            lastErrorDescription: lastError?.localizedDescription,
+            lastPollAt: lastPollAt
+        )
     }
 
     /// Fetch user IDs from both APIs and cache on the workspace. Idempotent -
@@ -105,11 +156,19 @@ public actor WorkspaceController {
 
             lastSnapshot = current
             currentRunningIssueId = decision.runningIssueId
+            if let runningId = decision.runningIssueId,
+               let runningIssue = current.first(where: { $0.id == runningId }) {
+                runningIssueMetadata = (runningIssue.identifier, runningIssue.title)
+            } else {
+                runningIssueMetadata = nil
+            }
             lastPollAt = Date()
             lastError = nil
+            onSnapshotChange?(snapshot())
             return decision
         } catch {
             lastError = error
+            onSnapshotChange?(snapshot())
             throw error
         }
     }

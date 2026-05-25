@@ -6,8 +6,7 @@ struct TymelineApp: App {
 
     var body: some Scene {
         Settings {
-            SettingsView()
-                .frame(minWidth: 480, minHeight: 320)
+            SettingsView(coordinator: appDelegate.coordinator)
         }
     }
 }
