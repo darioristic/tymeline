@@ -44,6 +44,28 @@ public actor ClockifyClient {
         return try JSONDecoder().decode(ClockifyUser.self, from: data)
     }
 
+    /// Fetches non-archived projects in the workspace. Paginated; we fetch a
+    /// generous page-size and ignore pagination for now (most workspaces have
+    /// far fewer than 200 active projects).
+    public func fetchProjects(workspaceId: String) async throws -> [ClockifyProject] {
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("workspaces/\(workspaceId)/projects"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "archived", value: "false"),
+            URLQueryItem(name: "page-size", value: "200"),
+        ]
+
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "GET"
+        request.setValue(apiKey, forHTTPHeaderField: "X-Api-Key")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let (data, _) = try await send(request, accepting: [200])
+        return try JSONDecoder().decode([ClockifyProject].self, from: data)
+    }
+
     /// Start a running time entry for the current user in the given workspace.
     /// Returns the newly-created entry.
     public func startTimer(

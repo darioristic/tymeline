@@ -22,13 +22,15 @@ final class WorkspaceControllerTests {
     private func makeController(
         linearUserId: String? = "lin-user-me",
         clockifyWorkspaceId: String? = "ck-ws-1",
-        clockifyUserId: String? = "ck-user-me"
+        clockifyUserId: String? = "ck-user-me",
+        projectMappings: [String: String] = [:]
     ) -> WorkspaceController {
         let workspace = Workspace(
             name: "Test",
             linearUserId: linearUserId,
             clockifyWorkspaceId: clockifyWorkspaceId,
-            clockifyUserId: clockifyUserId
+            clockifyUserId: clockifyUserId,
+            projectMappings: projectMappings
         )
         let linear = LinearClient(apiKey: "lin-key", urlSession: linearSession)
         let clockify = ClockifyClient(apiKey: "ck-key", urlSession: clockifySession)
@@ -39,6 +41,25 @@ final class WorkspaceControllerTests {
         )
     }
 
+    private func issue(
+        id: String = "iss-1",
+        identifier: String = "ENG-100",
+        title: String = "Active task",
+        state: LinearIssueStateType = .started,
+        projectId: String? = "lin-proj-1"
+    ) -> LinearIssue {
+        LinearIssue(
+            id: id,
+            identifier: identifier,
+            title: title,
+            stateType: state,
+            stateName: "In Progress",
+            assigneeId: "lin-user-me",
+            projectId: projectId,
+            updatedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+    }
+
     @Test func pollThrowsIfLinearUserIdNotResolved() async {
         let controller = makeController(linearUserId: nil)
         await #expect(throws: WorkspaceControllerError.linearUserNotResolved) {
@@ -46,27 +67,18 @@ final class WorkspaceControllerTests {
         }
     }
 
-    @Test func pollThrowsIfClockifyWorkspaceIdNotResolved() async {
-        let controller = makeController(clockifyWorkspaceId: nil)
-        await #expect(throws: WorkspaceControllerError.clockifyWorkspaceNotResolved) {
-            _ = try await controller.poll()
-        }
-    }
-
     @Test func resolveIdentityPopulatesAllIds() async throws {
         MockURLProtocol.requestHandler = { request in
             let url = request.url!
-            let path = url.path
             let host = url.host ?? ""
 
             if host.contains("linear") {
-                // Linear fetchMe returns viewer
                 let json = """
                 {"data": {"viewer": {"id": "lin-resolved", "name": "Me", "email": "me@x.com"}}}
                 """.data(using: .utf8)!
                 return (HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!, json)
             }
-            if host.contains("clockify") && path.hasSuffix("/user") {
+            if host.contains("clockify") && url.path.hasSuffix("/user") {
                 let json = """
                 {"id": "ck-resolved", "email": "me@x.com", "name": "Me", "activeWorkspace": "ck-ws-resolved"}
                 """.data(using: .utf8)!
@@ -85,29 +97,12 @@ final class WorkspaceControllerTests {
         #expect(workspace.clockifyWorkspaceId == "ck-ws-resolved")
     }
 
-    @Test func resolveIdentityIsIdempotentWhenAlreadySet() async throws {
-        var fetchCount = 0
-        let counter = Counter()
+    @Test func pollFetchesAndUpdatesAssignedIssuesWithoutStartingTimer() async throws {
+        let httpCallCount = Counter()
 
         MockURLProtocol.requestHandler = { request in
-            counter.increment()
+            httpCallCount.increment()
             let url = request.url!
-            return (HTTPURLResponse(url: url, statusCode: 500, httpVersion: nil, headerFields: nil)!, Data())
-        }
-
-        let controller = makeController()
-        try await controller.resolveIdentity()
-        _ = fetchCount
-        #expect(counter.value == 0)  // no HTTP calls made
-    }
-
-    @Test func pollWithFirstStartedIssueCallsStartTimer() async throws {
-        let interactions = InteractionLog()
-
-        MockURLProtocol.requestHandler = { request in
-            let url = request.url!
-            let method = request.httpMethod ?? "?"
-            interactions.append("\(method) \(url.host ?? "")\(url.path)")
 
             if url.host?.contains("linear") == true {
                 let json = """
@@ -122,7 +117,7 @@ final class WorkspaceControllerTests {
                             "title": "Active task",
                             "state": {"id": "st", "name": "In Progress", "type": "started"},
                             "assignee": {"id": "lin-user-me"},
-                            "project": {"id": "proj-1"},
+                            "project": {"id": "lin-proj-1"},
                             "updatedAt": "2026-05-25T10:00:00.000Z"
                           }
                         ]
@@ -134,138 +129,138 @@ final class WorkspaceControllerTests {
                 return (HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!, json)
             }
 
-            if url.host?.contains("clockify") == true && method == "POST" {
-                let json = """
-                {
-                  "id": "te-1",
-                  "description": "ENG-100: Active task",
-                  "projectId": null,
-                  "userId": "ck-user-me",
-                  "workspaceId": "ck-ws-1",
-                  "timeInterval": {"start": "2026-05-25T10:00:00Z", "end": null}
-                }
-                """.data(using: .utf8)!
-                return (HTTPURLResponse(url: url, statusCode: 201, httpVersion: nil, headerFields: nil)!, json)
-            }
-
-            Issue.record("Unexpected request: \(method) \(url)")
+            Issue.record("Unexpected request to Clockify - poll should not touch it: \(url)")
             return (HTTPURLResponse(url: url, statusCode: 500, httpVersion: nil, headerFields: nil)!, Data())
         }
 
         let controller = makeController()
-        let decision = try await controller.poll()
+        let issues = try await controller.poll()
 
-        #expect(decision.runningIssueId == "iss-1")
-        #expect(decision.commands.count == 1)
-        if case .start(let issue) = decision.commands[0] {
-            #expect(issue.identifier == "ENG-100")
-        } else {
-            Issue.record("expected start command")
-        }
-
-        let snapshot = await controller.lastSnapshot
-        let running = await controller.currentRunningIssueId
-        #expect(snapshot.count == 1)
-        #expect(running == "iss-1")
-
-        #expect(interactions.values.contains { $0.contains("POST") && $0.contains("clockify") })
-    }
-
-    @Test func subsequentPollWithIssueCompletedCallsStopTimer() async throws {
-        let interactions = InteractionLog()
-        let pollNumber = Counter()
-
-        MockURLProtocol.requestHandler = { request in
-            let url = request.url!
-            let method = request.httpMethod ?? "?"
-            interactions.append("\(method) \(url.host ?? "")\(url.path)")
-
-            if url.host?.contains("linear") == true {
-                pollNumber.increment()
-                let stateType = pollNumber.value == 1 ? "started" : "completed"
-                let json = """
-                {
-                  "data": {
-                    "viewer": {
-                      "assignedIssues": {
-                        "nodes": [
-                          {
-                            "id": "iss-1",
-                            "identifier": "ENG-100",
-                            "title": "Task",
-                            "state": {"id": "st", "name": "State", "type": "\(stateType)"},
-                            "assignee": {"id": "lin-user-me"},
-                            "project": null,
-                            "updatedAt": "2026-05-25T10:00:00.000Z"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-                """.data(using: .utf8)!
-                // Note: second poll will filter out 'completed' state in real API
-                // because of the query filter, but we keep it in the response for
-                // this test to verify the .stateChanged transition path.
-                return (HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!, json)
-            }
-
-            if url.host?.contains("clockify") == true && method == "POST" {
-                let json = """
-                {
-                  "id": "te-1",
-                  "description": "ENG-100: Task",
-                  "projectId": null,
-                  "userId": "ck-user-me",
-                  "workspaceId": "ck-ws-1",
-                  "timeInterval": {"start": "2026-05-25T10:00:00Z", "end": null}
-                }
-                """.data(using: .utf8)!
-                return (HTTPURLResponse(url: url, statusCode: 201, httpVersion: nil, headerFields: nil)!, json)
-            }
-
-            if url.host?.contains("clockify") == true && method == "PATCH" {
-                let json = """
-                {
-                  "id": "te-1",
-                  "description": "ENG-100: Task",
-                  "projectId": null,
-                  "userId": "ck-user-me",
-                  "workspaceId": "ck-ws-1",
-                  "timeInterval": {"start": "2026-05-25T10:00:00Z", "end": "2026-05-25T11:00:00Z"}
-                }
-                """.data(using: .utf8)!
-                return (HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!, json)
-            }
-
-            Issue.record("Unexpected request: \(method) \(url)")
-            return (HTTPURLResponse(url: url, statusCode: 500, httpVersion: nil, headerFields: nil)!, Data())
-        }
-
-        let controller = makeController()
-
-        // First poll - issue is started, timer starts
-        let firstDecision = try await controller.poll()
-        #expect(firstDecision.runningIssueId == "iss-1")
-
-        // Second poll - issue is completed, timer should stop
-        let secondDecision = try await controller.poll()
-        #expect(secondDecision.runningIssueId == nil)
-        #expect(secondDecision.commands.count == 1)
-        if case .stop(let issueId) = secondDecision.commands[0] {
-            #expect(issueId == "iss-1")
-        } else {
-            Issue.record("expected stop command")
-        }
+        #expect(issues.count == 1)
+        #expect(issues[0].identifier == "ENG-100")
 
         let running = await controller.currentRunningIssueId
         #expect(running == nil)
-
-        let patches = interactions.values.filter { $0.contains("PATCH") }
-        #expect(patches.count == 1)
+        #expect(httpCallCount.value == 1)  // only Linear, not Clockify
     }
 
-    // Simple thread-safe collectors for handler-side observation.
+    @Test func startTimerThrowsWhenProjectMappingMissing() async throws {
+        let controller = makeController(projectMappings: [:])
+        await #expect {
+            try await controller.startTimer(for: issue())
+        } throws: { error in
+            if case WorkspaceControllerError.projectMappingMissing = error { return true }
+            return false
+        }
+    }
+
+    @Test func startTimerThrowsWhenIssueHasNoProject() async throws {
+        let controller = makeController(projectMappings: ["lin-proj-1": "ck-proj-1"])
+        await #expect {
+            try await controller.startTimer(for: issue(projectId: nil))
+        } throws: { error in
+            if case WorkspaceControllerError.projectMappingMissing = error { return true }
+            return false
+        }
+    }
+
+    @Test func startTimerResolvesProjectAndCallsClockifyStart() async throws {
+        let interactions = InteractionLog()
+
+        MockURLProtocol.requestHandler = { request in
+            let url = request.url!
+            interactions.append("\(request.httpMethod ?? "?") \(url.path)")
+
+            let json = """
+            {
+              "id": "te-1",
+              "description": "ENG-100: Active task",
+              "projectId": "ck-proj-1",
+              "userId": "ck-user-me",
+              "workspaceId": "ck-ws-1",
+              "timeInterval": {"start": "2026-05-25T10:00:00Z", "end": null}
+            }
+            """.data(using: .utf8)!
+            return (HTTPURLResponse(url: url, statusCode: 201, httpVersion: nil, headerFields: nil)!, json)
+        }
+
+        let controller = makeController(projectMappings: ["lin-proj-1": "ck-proj-1"])
+        try await controller.startTimer(for: issue())
+
+        let running = await controller.currentRunningIssueId
+        #expect(running == "iss-1")
+        #expect(interactions.values.contains { $0.contains("POST") && $0.contains("/time-entries") })
+    }
+
+    @Test func stopRunningTimerCallsClockifyStop() async throws {
+        let interactions = InteractionLog()
+
+        MockURLProtocol.requestHandler = { request in
+            let url = request.url!
+            interactions.append("\(request.httpMethod ?? "?") \(url.path)")
+
+            let json = """
+            {
+              "id": "te-1",
+              "description": "X",
+              "projectId": "ck-proj-1",
+              "userId": "ck-user-me",
+              "workspaceId": "ck-ws-1",
+              "timeInterval": {"start": "2026-05-25T10:00:00Z", "end": "2026-05-25T11:00:00Z"}
+            }
+            """.data(using: .utf8)!
+            return (HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!, json)
+        }
+
+        let controller = makeController()
+        try await controller.stopRunningTimer()
+
+        let running = await controller.currentRunningIssueId
+        #expect(running == nil)
+        #expect(interactions.values.contains { $0.contains("PATCH") })
+    }
+
+    @Test func fetchProjectsReturnsBothLists() async throws {
+        MockURLProtocol.requestHandler = { request in
+            let url = request.url!
+
+            if url.host?.contains("linear") == true {
+                let json = """
+                {"data": {"projects": {"nodes": [
+                  {"id": "lin-proj-1", "name": "Project A", "color": "#FF0000", "state": "started"}
+                ]}}}
+                """.data(using: .utf8)!
+                return (HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!, json)
+            }
+            if url.host?.contains("clockify") == true {
+                let json = """
+                [
+                  {"id": "ck-proj-1", "name": "Clockify Project A", "color": "#00FF00", "workspaceId": "ck-ws-1", "clientName": "Acme", "archived": false}
+                ]
+                """.data(using: .utf8)!
+                return (HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!, json)
+            }
+            Issue.record("Unexpected request: \(url)")
+            return (HTTPURLResponse(url: url, statusCode: 500, httpVersion: nil, headerFields: nil)!, Data())
+        }
+
+        let controller = makeController()
+        let (linear, clockify) = try await controller.fetchProjects()
+
+        #expect(linear.count == 1)
+        #expect(linear[0].name == "Project A")
+        #expect(clockify.count == 1)
+        #expect(clockify[0].name == "Clockify Project A")
+        #expect(clockify[0].clientName == "Acme")
+    }
+
+    @Test func updateProjectMappingsUpdatesWorkspace() async {
+        let controller = makeController(projectMappings: ["a": "b"])
+        await controller.updateProjectMappings(["a": "b", "c": "d"])
+        let workspace = await controller.workspace
+        #expect(workspace.projectMappings == ["a": "b", "c": "d"])
+    }
+
     private final class InteractionLog: @unchecked Sendable {
         private let lock = NSLock()
         private var _values: [String] = []

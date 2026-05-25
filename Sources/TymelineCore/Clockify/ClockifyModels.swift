@@ -14,6 +14,45 @@ public struct ClockifyUser: Decodable, Equatable, Sendable {
     }
 }
 
+public struct ClockifyProject: Decodable, Equatable, Identifiable, Sendable {
+    public let id: String
+    public let name: String
+    public let color: String?
+    public let workspaceId: String
+    public let clientName: String?
+    public let archived: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, color, workspaceId, clientName, archived
+    }
+
+    public init(
+        id: String,
+        name: String,
+        color: String?,
+        workspaceId: String,
+        clientName: String?,
+        archived: Bool
+    ) {
+        self.id = id
+        self.name = name
+        self.color = color
+        self.workspaceId = workspaceId
+        self.clientName = clientName
+        self.archived = archived
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try c.decode(String.self, forKey: .id)
+        self.name = try c.decode(String.self, forKey: .name)
+        self.color = try c.decodeIfPresent(String.self, forKey: .color)
+        self.workspaceId = try c.decode(String.self, forKey: .workspaceId)
+        self.clientName = try c.decodeIfPresent(String.self, forKey: .clientName)
+        self.archived = try c.decodeIfPresent(Bool.self, forKey: .archived) ?? false
+    }
+}
+
 public struct ClockifyTimeEntry: Decodable, Equatable, Sendable {
     public let id: String
     public let description: String

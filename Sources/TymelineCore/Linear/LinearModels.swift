@@ -25,6 +25,28 @@ struct LinearViewerResponse: Decodable, Sendable {
     let viewer: LinearUser
 }
 
+public struct LinearProject: Decodable, Equatable, Identifiable, Sendable {
+    public let id: String
+    public let name: String
+    public let color: String?
+    public let state: String?
+
+    public init(id: String, name: String, color: String?, state: String?) {
+        self.id = id
+        self.name = name
+        self.color = color
+        self.state = state
+    }
+}
+
+struct LinearProjectsResponse: Decodable, Sendable {
+    let projects: ProjectConnection
+
+    struct ProjectConnection: Decodable, Sendable {
+        let nodes: [LinearProject]
+    }
+}
+
 struct LinearAssignedIssuesResponse: Decodable, Sendable {
     let viewer: Viewer
 

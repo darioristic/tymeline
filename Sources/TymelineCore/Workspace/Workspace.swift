@@ -20,6 +20,11 @@ public struct Workspace: Codable, Identifiable, Equatable, Sendable {
     public var clockifyWorkspaceId: String?
     public var clockifyUserId: String?
 
+    /// Maps Linear projectId -> Clockify projectId. The user configures this
+    /// in Settings. If an issue's Linear project is not in the map, the
+    /// timer start request will fail (Clockify often requires a project).
+    public var projectMappings: [String: String]
+
     public init(
         id: UUID = UUID(),
         name: String,
@@ -30,7 +35,8 @@ public struct Workspace: Codable, Identifiable, Equatable, Sendable {
         updatedAt: Date = Date(),
         linearUserId: String? = nil,
         clockifyWorkspaceId: String? = nil,
-        clockifyUserId: String? = nil
+        clockifyUserId: String? = nil,
+        projectMappings: [String: String] = [:]
     ) {
         self.id = id
         self.name = name
@@ -42,5 +48,30 @@ public struct Workspace: Codable, Identifiable, Equatable, Sendable {
         self.linearUserId = linearUserId
         self.clockifyWorkspaceId = clockifyWorkspaceId
         self.clockifyUserId = clockifyUserId
+        self.projectMappings = projectMappings
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, colorHex, pollIntervalSeconds, enabled
+        case createdAt, updatedAt
+        case linearUserId, clockifyWorkspaceId, clockifyUserId
+        case projectMappings
+    }
+
+    /// Custom decoder so older `workspaces.json` files without
+    /// `projectMappings` still load (default to `[:]`).
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try c.decode(UUID.self, forKey: .id)
+        self.name = try c.decode(String.self, forKey: .name)
+        self.colorHex = try c.decode(String.self, forKey: .colorHex)
+        self.pollIntervalSeconds = try c.decode(Int.self, forKey: .pollIntervalSeconds)
+        self.enabled = try c.decode(Bool.self, forKey: .enabled)
+        self.createdAt = try c.decode(Date.self, forKey: .createdAt)
+        self.updatedAt = try c.decode(Date.self, forKey: .updatedAt)
+        self.linearUserId = try c.decodeIfPresent(String.self, forKey: .linearUserId)
+        self.clockifyWorkspaceId = try c.decodeIfPresent(String.self, forKey: .clockifyWorkspaceId)
+        self.clockifyUserId = try c.decodeIfPresent(String.self, forKey: .clockifyUserId)
+        self.projectMappings = try c.decodeIfPresent([String: String].self, forKey: .projectMappings) ?? [:]
     }
 }

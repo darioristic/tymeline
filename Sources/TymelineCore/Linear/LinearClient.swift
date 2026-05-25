@@ -51,6 +51,25 @@ public actor LinearClient {
         return response.viewer
     }
 
+    /// Fetches the projects the user has access to. Filters out completed
+    /// and canceled projects so the picker stays usable.
+    public func fetchProjects() async throws -> [LinearProject] {
+        let query = """
+        query MyProjects {
+          projects(filter: { state: { in: ["started", "planned", "backlog"] } }) {
+            nodes {
+              id
+              name
+              color
+              state
+            }
+          }
+        }
+        """
+        let response: LinearProjectsResponse = try await execute(query: query)
+        return response.projects.nodes
+    }
+
     /// Fetches issues assigned to the current user in `unstarted` or `started`
     /// states - the candidate set for the auto-timer. Ordered by most recently
     /// updated (Linear's default).
