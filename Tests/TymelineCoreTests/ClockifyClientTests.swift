@@ -1,21 +1,20 @@
-import XCTest
+import Testing
+import Foundation
 @testable import TymelineCore
 
-final class ClockifyClientTests: XCTestCase {
-    private var session: URLSession!
+@Suite("ClockifyClient", .serialized)
+final class ClockifyClientTests {
+    let session: URLSession
 
-    override func setUp() {
-        super.setUp()
+    init() {
         session = .mock()
     }
 
-    override func tearDown() {
+    deinit {
         MockURLProtocol.requestHandler = nil
-        session = nil
-        super.tearDown()
     }
 
-    func testFetchMeReturnsUser() async throws {
+    @Test func fetchMeReturnsUser() async throws {
         let json = """
         {
           "id": "u-1",
@@ -26,10 +25,10 @@ final class ClockifyClientTests: XCTestCase {
         """.data(using: .utf8)!
 
         MockURLProtocol.requestHandler = { request in
-            XCTAssertEqual(request.value(forHTTPHeaderField: "X-Api-Key"), "ck-key")
-            XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
-            XCTAssertEqual(request.httpMethod, "GET")
-            XCTAssertEqual(request.url?.path, "/api/v1/user")
+            #expect(request.value(forHTTPHeaderField: "X-Api-Key") == "ck-key")
+            #expect(request.value(forHTTPHeaderField: "Accept") == "application/json")
+            #expect(request.httpMethod == "GET")
+            #expect(request.url?.path == "/api/v1/user")
             return (
                 HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!,
                 json
@@ -38,13 +37,10 @@ final class ClockifyClientTests: XCTestCase {
 
         let client = ClockifyClient(apiKey: "ck-key", urlSession: session)
         let user = try await client.fetchMe()
-        XCTAssertEqual(
-            user,
-            ClockifyUser(id: "u-1", email: "x@y.com", name: "Test", activeWorkspace: "ws-1")
-        )
+        #expect(user == ClockifyUser(id: "u-1", email: "x@y.com", name: "Test", activeWorkspace: "ws-1"))
     }
 
-    func testFetchMePropagatesHTTPErrorWithBody() async {
+    @Test func fetchMePropagatesHTTPErrorWithBody() async throws {
         let body = #"{"error": "unauthorized"}"#.data(using: .utf8)!
 
         MockURLProtocol.requestHandler = { request in
@@ -55,18 +51,14 @@ final class ClockifyClientTests: XCTestCase {
         }
 
         let client = ClockifyClient(apiKey: "key", urlSession: session)
-        do {
+        await #expect(
+            throws: ClockifyAPIError.httpStatus(401, body: #"{"error": "unauthorized"}"#)
+        ) {
             _ = try await client.fetchMe()
-            XCTFail("expected ClockifyAPIError.httpStatus")
-        } catch ClockifyAPIError.httpStatus(let code, let bodyString) {
-            XCTAssertEqual(code, 401)
-            XCTAssertEqual(bodyString, #"{"error": "unauthorized"}"#)
-        } catch {
-            XCTFail("wrong error: \(error)")
         }
     }
 
-    func testFetchMeThrowsOnMalformedJSON() async {
+    @Test func fetchMeThrowsOnMalformedJSON() async throws {
         let json = #"{"id": "incomplete"}"#.data(using: .utf8)!
 
         MockURLProtocol.requestHandler = { request in
@@ -77,13 +69,8 @@ final class ClockifyClientTests: XCTestCase {
         }
 
         let client = ClockifyClient(apiKey: "key", urlSession: session)
-        do {
+        await #expect(throws: DecodingError.self) {
             _ = try await client.fetchMe()
-            XCTFail("expected decoding error")
-        } catch is DecodingError {
-            // success
-        } catch {
-            XCTFail("wrong error type: \(error)")
         }
     }
 }

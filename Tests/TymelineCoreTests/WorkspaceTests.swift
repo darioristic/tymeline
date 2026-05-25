@@ -1,18 +1,20 @@
-import XCTest
+import Testing
+import Foundation
 @testable import TymelineCore
 
-final class WorkspaceTests: XCTestCase {
-    func testDefaultsAreReasonable() {
+@Suite("Workspace")
+struct WorkspaceTests {
+    @Test func defaultsAreReasonable() {
         let ws = Workspace(name: "Work")
-        XCTAssertEqual(ws.pollIntervalSeconds, 30)
-        XCTAssertTrue(ws.enabled)
-        XCTAssertNil(ws.linearUserId)
-        XCTAssertNil(ws.clockifyWorkspaceId)
-        XCTAssertNil(ws.clockifyUserId)
-        XCTAssertFalse(ws.colorHex.isEmpty)
+        #expect(ws.pollIntervalSeconds == 30)
+        #expect(ws.enabled == true)
+        #expect(ws.linearUserId == nil)
+        #expect(ws.clockifyWorkspaceId == nil)
+        #expect(ws.clockifyUserId == nil)
+        #expect(!ws.colorHex.isEmpty)
     }
 
-    func testCodableRoundTripPreservesAllFields() throws {
+    @Test func codableRoundTripPreservesAllFields() throws {
         let original = Workspace(
             id: UUID(uuidString: "11111111-2222-3333-4444-555555555555")!,
             name: "Personal",
@@ -34,13 +36,13 @@ final class WorkspaceTests: XCTestCase {
         decoder.dateDecodingStrategy = .iso8601
         let decoded = try decoder.decode(Workspace.self, from: data)
 
-        XCTAssertEqual(decoded, original)
+        #expect(decoded == original)
     }
 
-    func testTwoWorkspacesWithSameNameAreDistinctById() {
+    @Test func twoWorkspacesWithSameNameAreDistinctById() {
         let a = Workspace(name: "Work")
         let b = Workspace(name: "Work")
-        XCTAssertNotEqual(a.id, b.id)
-        XCTAssertNotEqual(a, b)
+        #expect(a.id != b.id)
+        #expect(a != b)
     }
 }

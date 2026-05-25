@@ -1,21 +1,20 @@
-import XCTest
+import Testing
+import Foundation
 @testable import TymelineCore
 
-final class LinearClientTests: XCTestCase {
-    private var session: URLSession!
+@Suite("LinearClient", .serialized)
+final class LinearClientTests {
+    let session: URLSession
 
-    override func setUp() {
-        super.setUp()
+    init() {
         session = .mock()
     }
 
-    override func tearDown() {
+    deinit {
         MockURLProtocol.requestHandler = nil
-        session = nil
-        super.tearDown()
     }
 
-    func testFetchMeReturnsViewer() async throws {
+    @Test func fetchMeReturnsViewer() async throws {
         let json = """
         {
           "data": {
@@ -29,9 +28,9 @@ final class LinearClientTests: XCTestCase {
         """.data(using: .utf8)!
 
         MockURLProtocol.requestHandler = { request in
-            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "test-key")
-            XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
-            XCTAssertEqual(request.httpMethod, "POST")
+            #expect(request.value(forHTTPHeaderField: "Authorization") == "test-key")
+            #expect(request.value(forHTTPHeaderField: "Content-Type") == "application/json")
+            #expect(request.httpMethod == "POST")
             return (
                 HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!,
                 json
@@ -40,13 +39,10 @@ final class LinearClientTests: XCTestCase {
 
         let client = LinearClient(apiKey: "test-key", urlSession: session)
         let user = try await client.fetchMe()
-        XCTAssertEqual(
-            user,
-            LinearUser(id: "user-1", name: "Test User", email: "test@example.com")
-        )
+        #expect(user == LinearUser(id: "user-1", name: "Test User", email: "test@example.com"))
     }
 
-    func testFetchMePropagatesGraphQLErrors() async {
+    @Test func fetchMePropagatesGraphQLErrors() async throws {
         let json = """
         {
           "errors": [{"message": "Invalid auth"}, {"message": "Try again"}]
@@ -61,17 +57,12 @@ final class LinearClientTests: XCTestCase {
         }
 
         let client = LinearClient(apiKey: "key", urlSession: session)
-        do {
+        await #expect(throws: LinearAPIError.graphqlErrors(["Invalid auth", "Try again"])) {
             _ = try await client.fetchMe()
-            XCTFail("expected LinearAPIError.graphqlErrors")
-        } catch LinearAPIError.graphqlErrors(let messages) {
-            XCTAssertEqual(messages, ["Invalid auth", "Try again"])
-        } catch {
-            XCTFail("wrong error: \(error)")
         }
     }
 
-    func testFetchMeThrowsOnNon2xx() async {
+    @Test func fetchMeThrowsOnNon2xx() async throws {
         MockURLProtocol.requestHandler = { request in
             (
                 HTTPURLResponse(url: request.url!, statusCode: 401, httpVersion: nil, headerFields: nil)!,
@@ -80,17 +71,12 @@ final class LinearClientTests: XCTestCase {
         }
 
         let client = LinearClient(apiKey: "key", urlSession: session)
-        do {
+        await #expect(throws: LinearAPIError.httpStatus(401)) {
             _ = try await client.fetchMe()
-            XCTFail("expected LinearAPIError.httpStatus")
-        } catch LinearAPIError.httpStatus(let code) {
-            XCTAssertEqual(code, 401)
-        } catch {
-            XCTFail("wrong error: \(error)")
         }
     }
 
-    func testFetchMeThrowsOnMissingData() async {
+    @Test func fetchMeThrowsOnMissingData() async throws {
         let json = "{}".data(using: .utf8)!
         MockURLProtocol.requestHandler = { request in
             (
@@ -100,17 +86,12 @@ final class LinearClientTests: XCTestCase {
         }
 
         let client = LinearClient(apiKey: "key", urlSession: session)
-        do {
+        await #expect(throws: LinearAPIError.missingData) {
             _ = try await client.fetchMe()
-            XCTFail("expected LinearAPIError.missingData")
-        } catch LinearAPIError.missingData {
-            // success
-        } catch {
-            XCTFail("wrong error: \(error)")
         }
     }
 
-    func testRequestBodyContainsViewerQuery() async throws {
+    @Test func requestBodyContainsViewerQuery() async throws {
         let json = """
         {"data": {"viewer": {"id": "x", "name": "y", "email": "z@w"}}}
         """.data(using: .utf8)!
@@ -132,16 +113,13 @@ final class LinearClientTests: XCTestCase {
         let client = LinearClient(apiKey: "key", urlSession: session)
         _ = try await client.fetchMe()
 
-        guard
-            let bodyData = bodyCapture.body,
-            let payload = try JSONSerialization.jsonObject(with: bodyData) as? [String: Any],
-            let query = payload["query"] as? String
-        else {
-            XCTFail("could not read GraphQL body")
-            return
-        }
-        XCTAssertTrue(query.contains("viewer"))
-        XCTAssertTrue(query.contains("email"))
+        let bodyData = try #require(bodyCapture.body)
+        let payload = try #require(
+            try JSONSerialization.jsonObject(with: bodyData) as? [String: Any]
+        )
+        let query = try #require(payload["query"] as? String)
+        #expect(query.contains("viewer"))
+        #expect(query.contains("email"))
     }
 
     private static func readStream(_ stream: InputStream) -> Data {

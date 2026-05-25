@@ -1,85 +1,82 @@
-import XCTest
+import Testing
+import Foundation
 @testable import TymelineCore
 
-final class KeychainHelperTests: XCTestCase {
-    private var testService: String = ""
+@Suite("KeychainHelper")
+final class KeychainHelperTests {
+    let testService: String
 
-    override func setUp() {
-        super.setUp()
+    init() {
         testService = "app.tymeline.test.\(UUID().uuidString)"
     }
 
-    override func tearDownWithError() throws {
-        try KeychainHelper.deleteAll(in: testService)
-        try super.tearDownWithError()
+    deinit {
+        try? KeychainHelper.deleteAll(in: testService)
     }
 
-    func testAccountNameFormat() {
-        XCTAssertEqual(
-            KeychainHelper.accountName(service: .linear, workspaceId: "ws-123"),
-            "linear-ws-123"
+    @Test func accountNameFormat() {
+        #expect(
+            KeychainHelper.accountName(service: .linear, workspaceId: "ws-123")
+            == "linear-ws-123"
         )
-        XCTAssertEqual(
-            KeychainHelper.accountName(service: .clockify, workspaceId: "ws-abc"),
-            "clockify-ws-abc"
+        #expect(
+            KeychainHelper.accountName(service: .clockify, workspaceId: "ws-abc")
+            == "clockify-ws-abc"
         )
     }
 
-    func testSetAndGetSecret() throws {
+    @Test func setAndGetSecret() throws {
         try KeychainHelper.setSecret("hello-key", for: "account-1", in: testService)
-        XCTAssertEqual(
-            try KeychainHelper.getSecret(for: "account-1", in: testService),
-            "hello-key"
+        #expect(
+            try KeychainHelper.getSecret(for: "account-1", in: testService) == "hello-key"
         )
     }
 
-    func testGetMissingSecretThrowsItemNotFound() {
-        XCTAssertThrowsError(
+    @Test func getMissingSecretThrowsItemNotFound() {
+        #expect(throws: KeychainError.itemNotFound) {
             try KeychainHelper.getSecret(for: "missing", in: testService)
-        ) { error in
-            XCTAssertEqual(error as? KeychainError, .itemNotFound)
         }
     }
 
-    func testSetOverwritesExistingSecret() throws {
+    @Test func setOverwritesExistingSecret() throws {
         try KeychainHelper.setSecret("v1", for: "rotated", in: testService)
         try KeychainHelper.setSecret("v2", for: "rotated", in: testService)
-        XCTAssertEqual(
-            try KeychainHelper.getSecret(for: "rotated", in: testService),
-            "v2"
+        #expect(
+            try KeychainHelper.getSecret(for: "rotated", in: testService) == "v2"
         )
     }
 
-    func testDeleteSecret() throws {
+    @Test func deleteSecret() throws {
         try KeychainHelper.setSecret("doomed", for: "doomed-account", in: testService)
         try KeychainHelper.deleteSecret(for: "doomed-account", in: testService)
-        XCTAssertThrowsError(
+        #expect(throws: KeychainError.itemNotFound) {
             try KeychainHelper.getSecret(for: "doomed-account", in: testService)
-        ) { error in
-            XCTAssertEqual(error as? KeychainError, .itemNotFound)
         }
     }
 
-    func testDeleteSecretIsIdempotent() throws {
-        XCTAssertNoThrow(
+    @Test func deleteSecretIsIdempotent() {
+        #expect(throws: Never.self) {
             try KeychainHelper.deleteSecret(for: "never-existed", in: testService)
-        )
+        }
     }
 
-    func testDeleteAllClearsAllAccountsForService() throws {
+    @Test func deleteAllClearsAllAccountsForService() throws {
         try KeychainHelper.setSecret("a", for: "acct-a", in: testService)
         try KeychainHelper.setSecret("b", for: "acct-b", in: testService)
         try KeychainHelper.deleteAll(in: testService)
-        XCTAssertThrowsError(try KeychainHelper.getSecret(for: "acct-a", in: testService))
-        XCTAssertThrowsError(try KeychainHelper.getSecret(for: "acct-b", in: testService))
+        #expect(throws: KeychainError.itemNotFound) {
+            try KeychainHelper.getSecret(for: "acct-a", in: testService)
+        }
+        #expect(throws: KeychainError.itemNotFound) {
+            try KeychainHelper.getSecret(for: "acct-b", in: testService)
+        }
     }
 
-    func testSecretRoundTripPreservesUnicode() throws {
-        let unicode = "Žirafa 🦒 ключ ключ"
+    @Test func secretRoundTripPreservesUnicode() throws {
+        let unicode = "Žirafa 🦒 ключ"
         try KeychainHelper.setSecret(unicode, for: "unicode", in: testService)
-        XCTAssertEqual(
-            try KeychainHelper.getSecret(for: "unicode", in: testService),
-            unicode
+        #expect(
+            try KeychainHelper.getSecret(for: "unicode", in: testService) == unicode
         )
     }
 }

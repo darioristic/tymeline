@@ -1,8 +1,7 @@
 import Foundation
-import XCTest
 
 /// URLProtocol subclass that intercepts requests and returns a canned response.
-/// Set `MockURLProtocol.requestHandler` before each test; reset to nil in tearDown.
+/// Set `MockURLProtocol.requestHandler` before each test; reset to nil in teardown.
 final class MockURLProtocol: URLProtocol {
     nonisolated(unsafe) static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
 
@@ -12,7 +11,7 @@ final class MockURLProtocol: URLProtocol {
 
     override func startLoading() {
         guard let handler = Self.requestHandler else {
-            XCTFail("MockURLProtocol.requestHandler not set")
+            client?.urlProtocol(self, didFailWithError: MockError.handlerNotSet)
             return
         }
         do {
@@ -26,6 +25,10 @@ final class MockURLProtocol: URLProtocol {
     }
 
     override func stopLoading() {}
+
+    enum MockError: Error {
+        case handlerNotSet
+    }
 }
 
 extension URLSession {
