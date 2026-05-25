@@ -74,6 +74,15 @@ if [[ ! -d "$app_src" ]]; then
   exit 1
 fi
 
+# Re-sign embedded frameworks (Sparkle) ad-hoc so they match the app's
+# Team ID. Without this, dyld refuses to load Sparkle.framework and the
+# app crashes immediately on launch.
+bold "Re-signing bundle ad-hoc (matches Sparkle.framework to the app)..."
+codesign --force --deep --sign - "$app_src" >/dev/null 2>&1 || {
+  red "ad-hoc resign failed"
+  exit 1
+}
+
 bold "Installing to $app_dst..."
 if [[ -d "$app_dst" ]]; then
   # If the app is currently running, stop it first so the bundle can be replaced

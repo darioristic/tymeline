@@ -53,6 +53,17 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             build
 
+      - name: Re-sign embedded frameworks ad-hoc
+        # Sparkle.framework ships pre-signed with the Sparkle Project Team ID;
+        # macOS refuses to load it into our ad-hoc-signed app because the team
+        # IDs don't match ("mapping process and mapped file have different
+        # Team IDs"). Re-sign every nested binary with the ad-hoc identity so
+        # the team IDs match (i.e. all empty).
+        run: |
+          APP_PATH="build/Build/Products/Release/tymeline.app"
+          /usr/bin/codesign --force --deep --sign - "$APP_PATH"
+          /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_PATH" || true
+
       - name: Zip app
         id: zip
         run: |
