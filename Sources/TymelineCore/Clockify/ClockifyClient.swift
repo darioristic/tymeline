@@ -94,6 +94,30 @@ public actor ClockifyClient {
         return try JSONDecoder().decode(ClockifyTimeEntry.self, from: data)
     }
 
+    /// Fetch the currently-running time entry for the user, if any.
+    /// Used on launch to rehydrate the running-timer UI from the server (the
+    /// source of truth) instead of from local state, which the app may have
+    /// missed if it was killed.
+    public func fetchInProgressEntry(
+        workspaceId: String,
+        userId: String
+    ) async throws -> ClockifyTimeEntry? {
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("workspaces/\(workspaceId)/user/\(userId)/time-entries"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [URLQueryItem(name: "in-progress", value: "true")]
+
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "GET"
+        request.setValue(apiKey, forHTTPHeaderField: "X-Api-Key")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let (data, _) = try await send(request, accepting: [200])
+        let entries = try JSONDecoder().decode([ClockifyTimeEntry].self, from: data)
+        return entries.first(where: { $0.isRunning })
+    }
+
     /// Stop the currently-running time entry for the user. Returns the stopped
     /// entry, or `nil` if there was no running entry (Clockify returns 404).
     public func stopRunningTimer(

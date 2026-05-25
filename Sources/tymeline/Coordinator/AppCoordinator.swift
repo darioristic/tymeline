@@ -162,6 +162,8 @@ final class AppCoordinator {
                 )
             )
 
+            await controller.resumeRunningIfAny()
+
             let task = Task { [controller] in
                 await controller.run()
             }

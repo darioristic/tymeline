@@ -139,6 +139,44 @@ public actor WorkspaceController {
         }
     }
 
+    /// Query Clockify for an in-progress entry and adopt it as our running
+    /// state. Called once on launch so the UI reflects timers started in a
+    /// previous app session (or by another Clockify client). Best-effort:
+    /// silently no-ops on errors so a transient outage doesn't break boot.
+    public func resumeRunningIfAny() async {
+        guard let clockifyWorkspaceId = workspace.clockifyWorkspaceId,
+              let clockifyUserId = workspace.clockifyUserId else {
+            return
+        }
+        do {
+            guard let entry = try await clockifyClient.fetchInProgressEntry(
+                workspaceId: clockifyWorkspaceId,
+                userId: clockifyUserId
+            ) else { return }
+
+            let parsed = parseIssueIdentifier(fromDescription: entry.description)
+            currentRunningIssueId = parsed?.id ?? entry.id
+            runningIssueMetadata = (parsed?.identifier ?? "?", parsed?.title ?? entry.description)
+            runningStartedAt = parseISO(entry.timeInterval.start)
+            onSnapshotChange?(snapshot())
+        } catch {
+            // best-effort: leave running state empty
+        }
+    }
+
+    /// We encode descriptions as "<IDENTIFIER>: <Title>" (see startTimer).
+    /// Parse it back so resume can show the actual identifier in the UI.
+    /// Returns a synthetic LinearIssue.id of nil since the Clockify entry
+    /// doesn't carry the Linear UUID - we use identifier as the display key
+    /// and let the next poll() rehydrate the full LinearIssue if assigned.
+    private func parseIssueIdentifier(fromDescription description: String) -> (id: String?, identifier: String, title: String)? {
+        guard let colonRange = description.range(of: ": ") else { return nil }
+        let identifier = String(description[..<colonRange.lowerBound])
+        let title = String(description[colonRange.upperBound...])
+        guard !identifier.isEmpty, identifier.contains("-") else { return nil }
+        return (nil, identifier, title)
+    }
+
     /// Refresh the list of assigned issues. Does not touch timers.
     @discardableResult
     public func poll() async throws -> [LinearIssue] {
@@ -150,6 +188,17 @@ public actor WorkspaceController {
             assignedIssues = issues
             lastPollAt = Date()
             lastError = nil
+
+            // Reconcile resumed running state: if we adopted a Clockify entry
+            // on launch we only know its identifier (e.g. "COO-139"); now that
+            // we have the assigned-issue list, upgrade currentRunningIssueId
+            // to the real Linear UUID so the picker shows the running check.
+            if let metadata = runningIssueMetadata,
+               let match = issues.first(where: { $0.identifier == metadata.identifier }),
+               currentRunningIssueId != match.id {
+                currentRunningIssueId = match.id
+            }
+
             onSnapshotChange?(snapshot())
             return issues
         } catch {
