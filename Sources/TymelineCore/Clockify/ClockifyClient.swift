@@ -1,10 +1,10 @@
 import Foundation
 
-enum ClockifyAPIError: Error, LocalizedError {
+public enum ClockifyAPIError: Error, LocalizedError, Equatable {
     case invalidResponse
     case httpStatus(Int, body: String?)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidResponse:
             return "Clockify API returned a non-HTTP response"
@@ -17,17 +17,24 @@ enum ClockifyAPIError: Error, LocalizedError {
     }
 }
 
-actor ClockifyClient {
-    private let baseURL = URL(string: "https://api.clockify.me/api/v1")!
+public actor ClockifyClient {
+    public static let defaultBaseURL = URL(string: "https://api.clockify.me/api/v1")!
+
+    private let baseURL: URL
     private let apiKey: String
     private let urlSession: URLSession
 
-    init(apiKey: String, urlSession: URLSession = .shared) {
+    public init(
+        apiKey: String,
+        baseURL: URL = ClockifyClient.defaultBaseURL,
+        urlSession: URLSession = .shared
+    ) {
         self.apiKey = apiKey
+        self.baseURL = baseURL
         self.urlSession = urlSession
     }
 
-    func fetchMe() async throws -> ClockifyUser {
+    public func fetchMe() async throws -> ClockifyUser {
         var request = URLRequest(url: baseURL.appendingPathComponent("user"))
         request.httpMethod = "GET"
         request.setValue(apiKey, forHTTPHeaderField: "X-Api-Key")

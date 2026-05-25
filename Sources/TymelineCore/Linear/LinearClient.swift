@@ -1,12 +1,12 @@
 import Foundation
 
-enum LinearAPIError: Error, LocalizedError {
+public enum LinearAPIError: Error, LocalizedError, Equatable {
     case invalidResponse
     case httpStatus(Int)
     case graphqlErrors([String])
     case missingData
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidResponse:
             return "Linear API returned a non-HTTP response"
@@ -20,17 +20,24 @@ enum LinearAPIError: Error, LocalizedError {
     }
 }
 
-actor LinearClient {
-    private let endpoint = URL(string: "https://api.linear.app/graphql")!
+public actor LinearClient {
+    public static let defaultEndpoint = URL(string: "https://api.linear.app/graphql")!
+
+    private let endpoint: URL
     private let apiKey: String
     private let urlSession: URLSession
 
-    init(apiKey: String, urlSession: URLSession = .shared) {
+    public init(
+        apiKey: String,
+        endpoint: URL = LinearClient.defaultEndpoint,
+        urlSession: URLSession = .shared
+    ) {
         self.apiKey = apiKey
+        self.endpoint = endpoint
         self.urlSession = urlSession
     }
 
-    func fetchMe() async throws -> LinearUser {
+    public func fetchMe() async throws -> LinearUser {
         let query = """
         query Me {
           viewer {

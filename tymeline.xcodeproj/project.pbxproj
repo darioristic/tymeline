@@ -7,54 +7,40 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1D603A72A3F9E11AE2C13075 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65667E005EE3F18EA737D467 /* KeychainHelper.swift */; };
 		246139BE684854A9641AF721 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531CDC431536CC4E079ED114 /* MenuBarController.swift */; };
-		304702CE1A574E55A1D65B0E /* LinearModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CCB6E531754785F741588E /* LinearModels.swift */; };
-		3E87435CF71FF5B43294ECAD /* LinearClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC6270A19CDE897A99404E3 /* LinearClient.swift */; };
 		650C547D3514DB705AD01694 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A96CA9C1606F66AAF0C6F77C /* SettingsView.swift */; };
-		9591F986B6F9C0223A1284E3 /* ClockifyClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4351DF4AA9535F542E4935CD /* ClockifyClient.swift */; };
+		6715780618A85FEA31EBC87C /* TymelineCore in Frameworks */ = {isa = PBXBuildFile; productRef = F4514F7307ED8D60D4E33144 /* TymelineCore */; };
 		A5FA1C5B88596E6DCF9C8DD5 /* TymelineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */; };
-		A89E715462063DC088DED867 /* ClockifyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E76AD00D3E5420DB105DDD /* ClockifyModels.swift */; };
 		F1E1AA246E9493A19389E75A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC7C2AF3EFAA04522A3B86D /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		20CCB6E531754785F741588E /* LinearModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinearModels.swift; sourceTree = "<group>"; };
-		4351DF4AA9535F542E4935CD /* ClockifyClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockifyClient.swift; sourceTree = "<group>"; };
-		48E76AD00D3E5420DB105DDD /* ClockifyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockifyModels.swift; sourceTree = "<group>"; };
+		06AABC79D2EDDA5999C97CC1 /* coorpix-time-sync */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "coorpix-time-sync"; path = .; sourceTree = SOURCE_ROOT; };
 		4D41519FB8D819E96136B6D3 /* tymeline.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tymeline.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		531CDC431536CC4E079ED114 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
-		65667E005EE3F18EA737D467 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TymelineApp.swift; sourceTree = "<group>"; };
 		A96CA9C1606F66AAF0C6F77C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		BBC6270A19CDE897A99404E3 /* LinearClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinearClient.swift; sourceTree = "<group>"; };
 		DFC7C2AF3EFAA04522A3B86D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXGroup section */
-		0BF38F610156A0948BDD1198 /* Clockify */ = {
-			isa = PBXGroup;
-			children = (
-				4351DF4AA9535F542E4935CD /* ClockifyClient.swift */,
-				48E76AD00D3E5420DB105DDD /* ClockifyModels.swift */,
+/* Begin PBXFrameworksBuildPhase section */
+		2661AD914BE0F1CF3604E62F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6715780618A85FEA31EBC87C /* TymelineCore in Frameworks */,
 			);
-			path = Clockify;
-			sourceTree = "<group>";
+			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
 		23F9FAD4EA52A6CD49C467E7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				4D41519FB8D819E96136B6D3 /* tymeline.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		46AD169568213515A8C7D300 /* Keychain */ = {
-			isa = PBXGroup;
-			children = (
-				65667E005EE3F18EA737D467 /* KeychainHelper.swift */,
-			);
-			path = Keychain;
 			sourceTree = "<group>";
 		};
 		5CA47722C73AE50D38F23A1A /* App */ = {
@@ -82,18 +68,10 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
-		9AC25B050EC707D1F51FDFCA /* Linear */ = {
-			isa = PBXGroup;
-			children = (
-				BBC6270A19CDE897A99404E3 /* LinearClient.swift */,
-				20CCB6E531754785F741588E /* LinearModels.swift */,
-			);
-			path = Linear;
-			sourceTree = "<group>";
-		};
 		A4439D4ED2EA3598BA998166 = {
 			isa = PBXGroup;
 			children = (
+				EA5E9C0E90C47F9CD21682C4 /* Packages */,
 				CB2F91D7FF859A8CDCFE9FED /* Sources */,
 				23F9FAD4EA52A6CD49C467E7 /* Products */,
 			);
@@ -103,9 +81,6 @@
 			isa = PBXGroup;
 			children = (
 				5CA47722C73AE50D38F23A1A /* App */,
-				0BF38F610156A0948BDD1198 /* Clockify */,
-				46AD169568213515A8C7D300 /* Keychain */,
-				9AC25B050EC707D1F51FDFCA /* Linear */,
 				609959C910ADB1110F7C0845 /* MenuBar */,
 				894ECE337E57203EF3356A5E /* Settings */,
 			);
@@ -120,6 +95,14 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
+		EA5E9C0E90C47F9CD21682C4 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				06AABC79D2EDDA5999C97CC1 /* coorpix-time-sync */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -128,6 +111,7 @@
 			buildConfigurationList = 9C4E5BBA2E0330DE594165F2 /* Build configuration list for PBXNativeTarget "tymeline" */;
 			buildPhases = (
 				7A0F4F49C93140D4B2582E0E /* Sources */,
+				2661AD914BE0F1CF3604E62F /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -135,6 +119,7 @@
 			);
 			name = tymeline;
 			packageProductDependencies = (
+				F4514F7307ED8D60D4E33144 /* TymelineCore */,
 			);
 			productName = tymeline;
 			productReference = 4D41519FB8D819E96136B6D3 /* tymeline.app */;
@@ -164,6 +149,9 @@
 			);
 			mainGroup = A4439D4ED2EA3598BA998166;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EF230A714A07B9A6E69344D0 /* XCLocalSwiftPackageReference "." */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 23F9FAD4EA52A6CD49C467E7 /* Products */;
 			projectDirPath = "";
@@ -180,11 +168,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F1E1AA246E9493A19389E75A /* AppDelegate.swift in Sources */,
-				9591F986B6F9C0223A1284E3 /* ClockifyClient.swift in Sources */,
-				A89E715462063DC088DED867 /* ClockifyModels.swift in Sources */,
-				1D603A72A3F9E11AE2C13075 /* KeychainHelper.swift in Sources */,
-				3E87435CF71FF5B43294ECAD /* LinearClient.swift in Sources */,
-				304702CE1A574E55A1D65B0E /* LinearModels.swift in Sources */,
 				246139BE684854A9641AF721 /* MenuBarController.swift in Sources */,
 				650C547D3514DB705AD01694 /* SettingsView.swift in Sources */,
 				A5FA1C5B88596E6DCF9C8DD5 /* TymelineApp.swift in Sources */,
@@ -391,6 +374,20 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		EF230A714A07B9A6E69344D0 /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F4514F7307ED8D60D4E33144 /* TymelineCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TymelineCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CBA9EF078BC13CD10D3E2A0D /* Project object */;
 }

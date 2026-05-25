@@ -1,12 +1,12 @@
 import Foundation
 import Security
 
-enum KeychainError: Error, LocalizedError {
+public enum KeychainError: Error, LocalizedError, Equatable {
     case itemNotFound
     case unexpectedStatus(OSStatus)
     case invalidData
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .itemNotFound:
             return "Keychain item not found"
@@ -19,19 +19,23 @@ enum KeychainError: Error, LocalizedError {
     }
 }
 
-enum KeychainHelper {
-    static let service = "app.tymeline"
+public enum KeychainHelper {
+    public static let service = "app.tymeline"
 
-    enum ServiceKind: String {
+    public enum ServiceKind: String {
         case linear
         case clockify
     }
 
-    static func accountName(service kind: ServiceKind, workspaceId: String) -> String {
+    public static func accountName(service kind: ServiceKind, workspaceId: String) -> String {
         "\(kind.rawValue)-\(workspaceId)"
     }
 
-    static func setSecret(_ secret: String, for account: String) throws {
+    public static func setSecret(
+        _ secret: String,
+        for account: String,
+        in service: String = KeychainHelper.service
+    ) throws {
         guard let data = secret.data(using: .utf8) else { throw KeychainError.invalidData }
 
         let query: [String: Any] = [
@@ -60,7 +64,10 @@ enum KeychainHelper {
         }
     }
 
-    static func getSecret(for account: String) throws -> String {
+    public static func getSecret(
+        for account: String,
+        in service: String = KeychainHelper.service
+    ) throws -> String {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -88,13 +95,32 @@ enum KeychainHelper {
         }
     }
 
-    static func deleteSecret(for account: String) throws {
+    public static func deleteSecret(
+        for account: String,
+        in service: String = KeychainHelper.service
+    ) throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
         ]
 
+        let status = SecItemDelete(query as CFDictionary)
+        switch status {
+        case errSecSuccess, errSecItemNotFound:
+            return
+        default:
+            throw KeychainError.unexpectedStatus(status)
+        }
+    }
+
+    /// Deletes ALL keychain items for the given service. Use in test teardown
+    /// or when a user wipes a workspace. Be careful with the default service.
+    public static func deleteAll(in service: String) throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+        ]
         let status = SecItemDelete(query as CFDictionary)
         switch status {
         case errSecSuccess, errSecItemNotFound:

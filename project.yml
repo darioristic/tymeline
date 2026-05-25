@@ -23,6 +23,10 @@ settings:
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     SWIFT_STRICT_CONCURRENCY: complete
 
+packages:
+  TymelineCore:
+    path: .
+
 targets:
   tymeline:
     type: application
@@ -31,6 +35,9 @@ targets:
       - path: Sources/tymeline
     resources:
       - path: Resources/Assets.xcassets
+    dependencies:
+      - package: TymelineCore
+        product: TymelineCore
     settings:
       base:
         CODE_SIGN_ENTITLEMENTS: Resources/tymeline.entitlements
