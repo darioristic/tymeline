@@ -69,6 +69,37 @@ jobs:
           SHA=$(shasum -a 256 "${{ steps.zip.outputs.path }}" | awk '{print $1}')
           echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
 
+      - name: Fetch Sparkle tools
+        run: |
+          curl -fsSL -o /tmp/sparkle.tar.xz \
+            "https://github.com/sparkle-project/Sparkle/releases/download/2.6.4/Sparkle-2.6.4.tar.xz"
+          mkdir -p /tmp/sparkle
+          tar -xf /tmp/sparkle.tar.xz -C /tmp/sparkle
+          echo "/tmp/sparkle/bin" >> "$GITHUB_PATH"
+
+      - name: Sign zip with Sparkle private key
+        id: sign
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "::error::SPARKLE_PRIVATE_KEY secret is not set"
+            exit 1
+          fi
+          KEY_FILE="$(mktemp)"
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$KEY_FILE"
+          OUTPUT=$(/tmp/sparkle/bin/sign_update -f "$KEY_FILE" "${{ steps.zip.outputs.path }}")
+          rm -f "$KEY_FILE"
+          # sign_update prints: sparkle:edSignature="…" length="…"
+          ED_SIG=$(echo "$OUTPUT" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')
+          LENGTH=$(echo "$OUTPUT"  | sed -n 's/.*length="\([^"]*\)".*/\1/p')
+          if [ -z "$ED_SIG" ] || [ -z "$LENGTH" ]; then
+            echo "::error::Could not parse sign_update output: $OUTPUT"
+            exit 1
+          fi
+          echo "edSignature=$ED_SIG" >> "$GITHUB_OUTPUT"
+          echo "length=$LENGTH" >> "$GITHUB_OUTPUT"
+
       - name: Create / update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -95,26 +126,51 @@ jobs:
                Or skip the dance:
                `xattr -dr com.apple.quarantine /Applications/tymeline.app`
 
-      - name: Update Casks/tymeline.rb on main
+      - name: Update Casks/tymeline.rb and appcast.xml on main
         run: |
           VERSION="${{ steps.tag.outputs.name }}"
           VERSION="${VERSION#v}"
           SHA="${{ steps.sha.outputs.sha256 }}"
+          ED_SIG="${{ steps.sign.outputs.edSignature }}"
+          LENGTH="${{ steps.sign.outputs.length }}"
+          PUB_DATE=$(date -u "+%a, %d %b %Y %H:%M:%S +0000")
+          ZIP_URL="https://github.com/darioristic/tymeline/releases/download/v${VERSION}/${{ steps.zip.outputs.path }}"
 
           git fetch origin main
           git checkout main
 
-          # Replace the version "X.Y.Z" and sha256 "..." lines in-place
+          # 1. Bump cask
           /usr/bin/sed -i '' -E "s/^  version \".*\"/  version \"${VERSION}\"/" Casks/tymeline.rb
           /usr/bin/sed -i '' -E "s/^  sha256 \".*\"/  sha256 \"${SHA}\"/" Casks/tymeline.rb
 
-          if git diff --quiet Casks/tymeline.rb; then
-            echo "Cask already up to date."
+          # 2. Build a new appcast <item> using printf (avoids YAML/heredoc
+          # indentation issues) and insert it before </channel>.
+          ITEM=$(mktemp)
+          printf '%s\n' \
+            '    <item>' \
+            "      <title>Version ${VERSION}</title>" \
+            "      <sparkle:version>${VERSION}</sparkle:version>" \
+            "      <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>" \
+            "      <pubDate>${PUB_DATE}</pubDate>" \
+            "      <enclosure url=\"${ZIP_URL}\" type=\"application/octet-stream\" length=\"${LENGTH}\" sparkle:edSignature=\"${ED_SIG}\"/>" \
+            '    </item>' > "$ITEM"
+
+          /usr/bin/awk -v itemfile="$ITEM" '
+            /<\/channel>/ {
+              while ((getline line < itemfile) > 0) print line
+              close(itemfile)
+            }
+            { print }
+          ' appcast.xml > appcast.xml.new && mv appcast.xml.new appcast.xml
+          rm -f "$ITEM"
+
+          if git diff --quiet Casks/tymeline.rb appcast.xml; then
+            echo "Cask and appcast already up to date."
             exit 0
           fi
 
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Casks/tymeline.rb
-          git commit -m "Bump Casks/tymeline.rb to ${VERSION}"
+          git add Casks/tymeline.rb appcast.xml
+          git commit -m "Bump Cask + appcast to ${VERSION}"
           git push origin main

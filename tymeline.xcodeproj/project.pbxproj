@@ -16,6 +16,8 @@
 		76A0230F9BB6B34752BEE8A0 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5AD4AB8DD2B52E4E9B2F90 /* NotificationService.swift */; };
 		99B35F185F56824613CC5B1D /* IdleMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47EFE1FE5F508E99D334F724 /* IdleMonitor.swift */; };
 		A5FA1C5B88596E6DCF9C8DD5 /* TymelineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */; };
+		AD156C5D2DEBAD7A7EAB915D /* UpdaterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9849D8FDF79B9DE48EA702 /* UpdaterService.swift */; };
+		C583B325AF9830029CB0BA9D /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 8A552D1CC72CB7B5B3CFFB27 /* Sparkle */; };
 		F1E1AA246E9493A19389E75A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC7C2AF3EFAA04522A3B86D /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +30,7 @@
 		6B5AD4AB8DD2B52E4E9B2F90 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TymelineApp.swift; sourceTree = "<group>"; };
 		A96CA9C1606F66AAF0C6F77C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		AB9849D8FDF79B9DE48EA702 /* UpdaterService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterService.swift; sourceTree = "<group>"; };
 		DFC7C2AF3EFAA04522A3B86D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E13F45F9E4BFF34376E42DDA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E3294E59908DD6A00183B4C4 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
@@ -39,6 +42,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6715780618A85FEA31EBC87C /* TymelineCore in Frameworks */,
+				C583B325AF9830029CB0BA9D /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -67,6 +71,14 @@
 				6B5AD4AB8DD2B52E4E9B2F90 /* NotificationService.swift */,
 			);
 			path = Notifications;
+			sourceTree = "<group>";
+		};
+		2B5CE49DBF00316A25CFCD4E /* Updates */ = {
+			isa = PBXGroup;
+			children = (
+				AB9849D8FDF79B9DE48EA702 /* UpdaterService.swift */,
+			);
+			path = Updates;
 			sourceTree = "<group>";
 		};
 		37A70DBD5EEE0A3939097C15 /* Coordinator */ = {
@@ -130,6 +142,7 @@
 				609959C910ADB1110F7C0845 /* MenuBar */,
 				27DA936F240A16B9F01211CF /* Notifications */,
 				894ECE337E57203EF3356A5E /* Settings */,
+				2B5CE49DBF00316A25CFCD4E /* Updates */,
 			);
 			path = tymeline;
 			sourceTree = "<group>";
@@ -168,6 +181,7 @@
 			name = tymeline;
 			packageProductDependencies = (
 				F4514F7307ED8D60D4E33144 /* TymelineCore */,
+				8A552D1CC72CB7B5B3CFFB27 /* Sparkle */,
 			);
 			productName = tymeline;
 			productReference = 4D41519FB8D819E96136B6D3 /* tymeline.app */;
@@ -198,6 +212,7 @@
 			mainGroup = A4439D4ED2EA3598BA998166;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				6B688C7B30FB5B9F3208BCFA /* XCRemoteSwiftPackageReference "Sparkle" */,
 				EF230A714A07B9A6E69344D0 /* XCLocalSwiftPackageReference "." */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -234,6 +249,7 @@
 				650C547D3514DB705AD01694 /* SettingsView.swift in Sources */,
 				1809447220F3F23E0687C94A /* SettingsWindowController.swift in Sources */,
 				A5FA1C5B88596E6DCF9C8DD5 /* TymelineApp.swift in Sources */,
+				AD156C5D2DEBAD7A7EAB915D /* UpdaterService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -297,7 +313,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.1;
+				MARKETING_VERSION = 0.1.3;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -323,6 +339,10 @@
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright (c) 2026 Dario Risto. MIT License.";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				INFOPLIST_KEY_SUAutomaticallyUpdate = NO;
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/darioristic/tymeline/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "twrNl7v9wbRe0XhGRIhbbvTV9KGQNKgrzwylc/9bOio=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -382,7 +402,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.1;
+				MARKETING_VERSION = 0.1.3;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = app.tymeline;
@@ -407,6 +427,10 @@
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright (c) 2026 Dario Risto. MIT License.";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				INFOPLIST_KEY_SUAutomaticallyUpdate = NO;
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/darioristic/tymeline/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "twrNl7v9wbRe0XhGRIhbbvTV9KGQNKgrzwylc/9bOio=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -445,7 +469,23 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		6B688C7B30FB5B9F3208BCFA /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
+		8A552D1CC72CB7B5B3CFFB27 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6B688C7B30FB5B9F3208BCFA /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
 		F4514F7307ED8D60D4E33144 /* TymelineCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = TymelineCore;

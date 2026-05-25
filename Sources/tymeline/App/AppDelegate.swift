@@ -4,6 +4,7 @@ import TymelineCore
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let coordinator: AppCoordinator
+    let updater: UpdaterService
     private var menuBarController: MenuBarController?
     private var settingsWindowController: SettingsWindowController?
 
@@ -17,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             fatalError("Could not initialise storage: \(error)")
         }
         self.coordinator = AppCoordinator(storage: storage, secretStorage: secretStorage)
+        self.updater = UpdaterService()
         super.init()
     }
 
@@ -26,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menuBarController = MenuBarController(
             coordinator: coordinator,
+            updater: updater,
             openSettings: { [weak settingsController] in
                 settingsController?.showWindow()
             }

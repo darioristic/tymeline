@@ -13,7 +13,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MARKETING_VERSION: "0.1.3"
+    MARKETING_VERSION: "0.1.4"
     CURRENT_PROJECT_VERSION: "1"
     PRODUCT_BUNDLE_IDENTIFIER: app.tymeline
     PRODUCT_NAME: tymeline
@@ -26,6 +26,9 @@ settings:
 packages:
   TymelineCore:
     path: .
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.0
 
 targets:
   tymeline:
@@ -38,6 +41,8 @@ targets:
     dependencies:
       - package: TymelineCore
         product: TymelineCore
+      - package: Sparkle
+        product: Sparkle
     settings:
       base:
         CODE_SIGN_ENTITLEMENTS: Resources/tymeline.entitlements
@@ -48,3 +53,7 @@ targets:
         INFOPLIST_KEY_NSPrincipalClass: NSApplication
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/darioristic/tymeline/main/appcast.xml"
+        INFOPLIST_KEY_SUPublicEDKey: "twrNl7v9wbRe0XhGRIhbbvTV9KGQNKgrzwylc/9bOio="
+        INFOPLIST_KEY_SUEnableAutomaticChecks: YES
+        INFOPLIST_KEY_SUAutomaticallyUpdate: NO

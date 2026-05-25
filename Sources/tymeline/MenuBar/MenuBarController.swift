@@ -5,11 +5,13 @@ import TymelineCore
 final class MenuBarController {
     private let statusItem: NSStatusItem
     private let coordinator: AppCoordinator
+    private let updater: UpdaterService
     private let openSettings: () -> Void
     private var tickTimer: Timer?
 
-    init(coordinator: AppCoordinator, openSettings: @escaping () -> Void) {
+    init(coordinator: AppCoordinator, updater: UpdaterService, openSettings: @escaping () -> Void) {
         self.coordinator = coordinator
+        self.updater = updater
         self.openSettings = openSettings
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         configureButton()
@@ -155,6 +157,15 @@ final class MenuBarController {
         }
 
         menu.addItem(NSMenuItem.separator())
+
+        let updateItem = NSMenuItem(
+            title: "Check for Updates...",
+            action: #selector(checkForUpdatesAction),
+            keyEquivalent: ""
+        )
+        updateItem.target = self
+        updateItem.isEnabled = updater.canCheckForUpdates
+        menu.addItem(updateItem)
 
         let settingsItem = NSMenuItem(
             title: "Settings...",
@@ -303,6 +314,10 @@ final class MenuBarController {
 
     @objc private func openSettingsAction() {
         openSettings()
+    }
+
+    @objc private func checkForUpdatesAction() {
+        updater.checkForUpdates()
     }
 
     private func lastSyncString(_ date: Date?) -> String {
