@@ -21,6 +21,7 @@ final class AppCoordinator {
     var onStateChange: (() -> Void)?
 
     private let storage: WorkspaceStorage
+    private let secretStorage: SecretStorage
     private let notifications: NotificationService
     private let idleMonitor: IdleMonitor
     private var controllers: [UUID: WorkspaceController] = [:]
@@ -28,10 +29,12 @@ final class AppCoordinator {
 
     init(
         storage: WorkspaceStorage,
+        secretStorage: SecretStorage,
         notifications: NotificationService = NotificationService(),
         idleMonitor: IdleMonitor = IdleMonitor()
     ) {
         self.storage = storage
+        self.secretStorage = secretStorage
         self.notifications = notifications
         self.idleMonitor = idleMonitor
     }
@@ -42,10 +45,32 @@ final class AppCoordinator {
         do {
             let workspaces = try await storage.load()
             for workspace in workspaces {
+                await migrateKeychainIfNeeded(for: workspace)
                 await attachController(for: workspace)
             }
         } catch {
             setupError = "Failed to load workspaces: \(error.localizedDescription)"
+        }
+    }
+
+    /// One-shot migration: if API keys are still in the system Keychain
+    /// (from a build before v0.1.2), copy them into the sandbox-local
+    /// SecretStorage and remove the Keychain entry so we never prompt
+    /// the user again. Idempotent and silent on missing keys.
+    private func migrateKeychainIfNeeded(for workspace: Workspace) async {
+        let pairs: [(KeychainHelper.ServiceKind, String)] = [
+            (.linear, KeychainHelper.accountName(service: .linear, workspaceId: workspace.id.uuidString)),
+            (.clockify, KeychainHelper.accountName(service: .clockify, workspaceId: workspace.id.uuidString)),
+        ]
+        for (_, account) in pairs {
+            if (try? await secretStorage.get(account)) != nil { continue }
+            guard let legacy = try? KeychainHelper.getSecret(for: account) else { continue }
+            do {
+                try await secretStorage.set(legacy, for: account)
+                try? KeychainHelper.deleteSecret(for: account)
+            } catch {
+                // Leave keychain entry alone if write fails - we'll retry next launch.
+            }
         }
     }
 
@@ -105,8 +130,8 @@ final class AppCoordinator {
 
         let linearAccount = KeychainHelper.accountName(service: .linear, workspaceId: workspace.id.uuidString)
         let clockifyAccount = KeychainHelper.accountName(service: .clockify, workspaceId: workspace.id.uuidString)
-        try KeychainHelper.setSecret(linearKey, for: linearAccount)
-        try KeychainHelper.setSecret(clockifyKey, for: clockifyAccount)
+        try await secretStorage.set(linearKey, for: linearAccount)
+        try await secretStorage.set(clockifyKey, for: clockifyAccount)
 
         var existing = try await storage.load()
         existing.append(workspace)
@@ -179,6 +204,9 @@ final class AppCoordinator {
 
         let linearAccount = KeychainHelper.accountName(service: .linear, workspaceId: workspaceId.uuidString)
         let clockifyAccount = KeychainHelper.accountName(service: .clockify, workspaceId: workspaceId.uuidString)
+        try? await secretStorage.delete(linearAccount)
+        try? await secretStorage.delete(clockifyAccount)
+        // Best-effort sweep of any legacy Keychain leftovers from older versions.
         try? KeychainHelper.deleteSecret(for: linearAccount)
         try? KeychainHelper.deleteSecret(for: clockifyAccount)
 
@@ -220,8 +248,11 @@ final class AppCoordinator {
         let clockifyAccount = KeychainHelper.accountName(service: .clockify, workspaceId: workspace.id.uuidString)
 
         do {
-            let linearKey = try KeychainHelper.getSecret(for: linearAccount)
-            let clockifyKey = try KeychainHelper.getSecret(for: clockifyAccount)
+            guard let linearKey = try await secretStorage.get(linearAccount),
+                  let clockifyKey = try await secretStorage.get(clockifyAccount) else {
+                setupError = "Missing API keys for '\(workspace.name)' - re-add the workspace from Settings."
+                return
+            }
 
             let linear = LinearClient(apiKey: linearKey)
             let clockify = ClockifyClient(apiKey: clockifyKey)
@@ -261,7 +292,7 @@ final class AppCoordinator {
             }
             pollTasks[workspace.id] = task
         } catch {
-            setupError = "Failed to load Keychain for '\(workspace.name)': \(error.localizedDescription)"
+            setupError = "Failed to load secrets for '\(workspace.name)': \(error.localizedDescription)"
         }
     }
 

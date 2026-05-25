@@ -9,12 +9,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     override init() {
         let storage: WorkspaceStorage
+        let secretStorage: SecretStorage
         do {
             storage = try WorkspaceStorage()
+            secretStorage = try SecretStorage()
         } catch {
-            fatalError("Could not initialise workspace storage: \(error)")
+            fatalError("Could not initialise storage: \(error)")
         }
-        self.coordinator = AppCoordinator(storage: storage)
+        self.coordinator = AppCoordinator(storage: storage, secretStorage: secretStorage)
         super.init()
     }
 
