@@ -6,12 +6,19 @@ final class MenuBarController {
     private let statusItem: NSStatusItem
     private let coordinator: AppCoordinator
     private let updater: UpdaterService
+    private let loginItem: LoginItemController
     private let openSettings: () -> Void
     private var tickTimer: Timer?
 
-    init(coordinator: AppCoordinator, updater: UpdaterService, openSettings: @escaping () -> Void) {
+    init(
+        coordinator: AppCoordinator,
+        updater: UpdaterService,
+        loginItem: LoginItemController,
+        openSettings: @escaping () -> Void
+    ) {
         self.coordinator = coordinator
         self.updater = updater
+        self.loginItem = loginItem
         self.openSettings = openSettings
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         configureButton()
@@ -170,6 +177,17 @@ final class MenuBarController {
 
         menu.addItem(NSMenuItem.separator())
 
+        let startAtLoginItem = NSMenuItem(
+            title: "Start at Login",
+            action: #selector(toggleStartAtLoginAction),
+            keyEquivalent: ""
+        )
+        startAtLoginItem.target = self
+        startAtLoginItem.state = loginItem.isEnabled ? .on : .off
+        menu.addItem(startAtLoginItem)
+
+        menu.addItem(NSMenuItem.separator())
+
         if let pendingVersion = updater.availableUpdateVersion {
             let pendingItem = NSMenuItem(
                 title: "Install update to \(pendingVersion)",
@@ -194,6 +212,14 @@ final class MenuBarController {
         updateItem.target = self
         updateItem.isEnabled = updater.canCheckForUpdates
         menu.addItem(updateItem)
+
+        let aboutItem = NSMenuItem(
+            title: "About tymeline",
+            action: #selector(showAboutAction),
+            keyEquivalent: ""
+        )
+        aboutItem.target = self
+        menu.addItem(aboutItem)
 
         let settingsItem = NSMenuItem(
             title: "Settings...",
@@ -346,6 +372,16 @@ final class MenuBarController {
 
     @objc private func checkForUpdatesAction() {
         updater.checkForUpdates()
+    }
+
+    @objc private func toggleStartAtLoginAction() {
+        loginItem.setEnabled(!loginItem.isEnabled)
+        rebuildMenu()
+    }
+
+    @objc private func showAboutAction() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.orderFrontStandardAboutPanel(nil)
     }
 
     private func lastSyncString(_ date: Date?) -> String {

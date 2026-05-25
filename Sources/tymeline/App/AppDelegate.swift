@@ -5,6 +5,7 @@ import TymelineCore
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let coordinator: AppCoordinator
     let updater: UpdaterService
+    let loginItem: LoginItemController
     private var menuBarController: MenuBarController?
     private var settingsWindowController: SettingsWindowController?
 
@@ -19,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         self.coordinator = AppCoordinator(storage: storage, secretStorage: secretStorage)
         self.updater = UpdaterService()
+        self.loginItem = LoginItemController()
         super.init()
     }
 
@@ -29,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBarController = MenuBarController(
             coordinator: coordinator,
             updater: updater,
+            loginItem: loginItem,
             openSettings: { [weak settingsController] in
                 settingsController?.showWindow()
             }

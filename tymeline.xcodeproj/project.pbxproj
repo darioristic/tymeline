@@ -15,6 +15,7 @@
 		71CA4DDE5A4E973AA989AD6C /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3294E59908DD6A00183B4C4 /* AppCoordinator.swift */; };
 		76A0230F9BB6B34752BEE8A0 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5AD4AB8DD2B52E4E9B2F90 /* NotificationService.swift */; };
 		99B35F185F56824613CC5B1D /* IdleMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47EFE1FE5F508E99D334F724 /* IdleMonitor.swift */; };
+		9AB49902E28977C2E770F48C /* LoginItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 565090F09F2E00454AAEE439 /* LoginItemController.swift */; };
 		A5FA1C5B88596E6DCF9C8DD5 /* TymelineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */; };
 		AD156C5D2DEBAD7A7EAB915D /* UpdaterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9849D8FDF79B9DE48EA702 /* UpdaterService.swift */; };
 		C583B325AF9830029CB0BA9D /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 8A552D1CC72CB7B5B3CFFB27 /* Sparkle */; };
@@ -27,6 +28,7 @@
 		47EFE1FE5F508E99D334F724 /* IdleMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleMonitor.swift; sourceTree = "<group>"; };
 		4D41519FB8D819E96136B6D3 /* tymeline.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tymeline.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		531CDC431536CC4E079ED114 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		565090F09F2E00454AAEE439 /* LoginItemController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemController.swift; sourceTree = "<group>"; };
 		6B5AD4AB8DD2B52E4E9B2F90 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TymelineApp.swift; sourceTree = "<group>"; };
 		A96CA9C1606F66AAF0C6F77C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -97,6 +99,14 @@
 			path = Idle;
 			sourceTree = "<group>";
 		};
+		53BB5FBCC9FFBA9D99CEAD06 /* Login */ = {
+			isa = PBXGroup;
+			children = (
+				565090F09F2E00454AAEE439 /* LoginItemController.swift */,
+			);
+			path = Login;
+			sourceTree = "<group>";
+		};
 		5CA47722C73AE50D38F23A1A /* App */ = {
 			isa = PBXGroup;
 			children = (
@@ -139,6 +149,7 @@
 				5CA47722C73AE50D38F23A1A /* App */,
 				37A70DBD5EEE0A3939097C15 /* Coordinator */,
 				461D41378FE140B913B15F35 /* Idle */,
+				53BB5FBCC9FFBA9D99CEAD06 /* Login */,
 				609959C910ADB1110F7C0845 /* MenuBar */,
 				27DA936F240A16B9F01211CF /* Notifications */,
 				894ECE337E57203EF3356A5E /* Settings */,
@@ -244,6 +255,7 @@
 				71CA4DDE5A4E973AA989AD6C /* AppCoordinator.swift in Sources */,
 				F1E1AA246E9493A19389E75A /* AppDelegate.swift in Sources */,
 				99B35F185F56824613CC5B1D /* IdleMonitor.swift in Sources */,
+				9AB49902E28977C2E770F48C /* LoginItemController.swift in Sources */,
 				246139BE684854A9641AF721 /* MenuBarController.swift in Sources */,
 				76A0230F9BB6B34752BEE8A0 /* NotificationService.swift in Sources */,
 				650C547D3514DB705AD01694 /* SettingsView.swift in Sources */,
@@ -313,7 +325,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.6;
+				MARKETING_VERSION = 0.1.9;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -395,7 +407,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.6;
+				MARKETING_VERSION = 0.1.9;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = app.tymeline;
