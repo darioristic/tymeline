@@ -144,23 +144,17 @@ final class WorkspaceControllerTests {
         #expect(httpCallCount.value == 1)  // only Linear, not Clockify
     }
 
-    @Test func startTimerThrowsWhenProjectMappingMissing() async throws {
+    @Test func startTimerThrowsWhenProjectMappingMissing() async {
         let controller = makeController(projectMappings: [:])
-        await #expect {
+        await #expect(throws: WorkspaceControllerError.self) {
             try await controller.startTimer(for: issue())
-        } throws: { error in
-            if case WorkspaceControllerError.projectMappingMissing = error { return true }
-            return false
         }
     }
 
-    @Test func startTimerThrowsWhenIssueHasNoProject() async throws {
+    @Test func startTimerThrowsWhenIssueHasNoProject() async {
         let controller = makeController(projectMappings: ["lin-proj-1": "ck-proj-1"])
-        await #expect {
+        await #expect(throws: WorkspaceControllerError.self) {
             try await controller.startTimer(for: issue(projectId: nil))
-        } throws: { error in
-            if case WorkspaceControllerError.projectMappingMissing = error { return true }
-            return false
         }
     }
 
