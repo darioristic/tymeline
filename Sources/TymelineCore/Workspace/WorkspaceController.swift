@@ -1,0 +1,165 @@
+import Foundation
+
+public enum WorkspaceControllerError: Error, LocalizedError, Equatable {
+    case linearUserNotResolved
+    case clockifyWorkspaceNotResolved
+    case clockifyUserNotResolved
+
+    public var errorDescription: String? {
+        switch self {
+        case .linearUserNotResolved:
+            return "Linear user ID not resolved yet - call resolveIdentity()"
+        case .clockifyWorkspaceNotResolved:
+            return "Clockify workspace ID not resolved yet - call resolveIdentity()"
+        case .clockifyUserNotResolved:
+            return "Clockify user ID not resolved yet - call resolveIdentity()"
+        }
+    }
+}
+
+/// Orchestrates one workspace's poll loop:
+///   LinearClient.fetchAssignedIssues
+///     -> TransitionDetector.detect
+///     -> AutoTimerController.decide
+///     -> ClockifyClient.start/stop timer
+///
+/// Stateful across polls: keeps the last issue snapshot for diffing and the
+/// currently-running Clockify entry id. Tests typically call `poll()`
+/// directly; production code calls `run()` which loops with the workspace's
+/// configured interval.
+public actor WorkspaceController {
+    public private(set) var workspace: Workspace
+    public private(set) var lastSnapshot: [LinearIssue] = []
+    public private(set) var currentRunningIssueId: String?
+    public private(set) var lastError: Error?
+    public private(set) var lastPollAt: Date?
+    public private(set) var isRunning: Bool = false
+
+    private let linearClient: LinearClient
+    private let clockifyClient: ClockifyClient
+    private let detector: TransitionDetector
+    private let controller: AutoTimerController
+
+    public init(
+        workspace: Workspace,
+        linearClient: LinearClient,
+        clockifyClient: ClockifyClient,
+        detector: TransitionDetector = TransitionDetector(),
+        controller: AutoTimerController = AutoTimerController()
+    ) {
+        self.workspace = workspace
+        self.linearClient = linearClient
+        self.clockifyClient = clockifyClient
+        self.detector = detector
+        self.controller = controller
+    }
+
+    /// Fetch user IDs from both APIs and cache on the workspace. Idempotent -
+    /// re-fetches only fields that are still nil.
+    public func resolveIdentity() async throws {
+        if workspace.linearUserId == nil {
+            let me = try await linearClient.fetchMe()
+            workspace.linearUserId = me.id
+            workspace.updatedAt = Date()
+        }
+        if workspace.clockifyUserId == nil || workspace.clockifyWorkspaceId == nil {
+            let me = try await clockifyClient.fetchMe()
+            workspace.clockifyUserId = me.id
+            workspace.clockifyWorkspaceId = me.activeWorkspace
+            workspace.updatedAt = Date()
+        }
+    }
+
+    /// Run one poll iteration. Returns the timer decision that was applied.
+    @discardableResult
+    public func poll() async throws -> AutoTimerDecision {
+        guard let linearUserId = workspace.linearUserId else {
+            throw WorkspaceControllerError.linearUserNotResolved
+        }
+        guard let clockifyWorkspaceId = workspace.clockifyWorkspaceId else {
+            throw WorkspaceControllerError.clockifyWorkspaceNotResolved
+        }
+        guard let clockifyUserId = workspace.clockifyUserId else {
+            throw WorkspaceControllerError.clockifyUserNotResolved
+        }
+
+        do {
+            let current = try await linearClient.fetchAssignedIssues()
+            let transitions = detector.detect(
+                previous: lastSnapshot,
+                current: current,
+                userId: linearUserId
+            )
+            let decision = controller.decide(
+                transitions: transitions,
+                currentRunningIssueId: currentRunningIssueId
+            )
+
+            for command in decision.commands {
+                try await execute(
+                    command,
+                    clockifyWorkspaceId: clockifyWorkspaceId,
+                    clockifyUserId: clockifyUserId
+                )
+            }
+
+            lastSnapshot = current
+            currentRunningIssueId = decision.runningIssueId
+            lastPollAt = Date()
+            lastError = nil
+            return decision
+        } catch {
+            lastError = error
+            throw error
+        }
+    }
+
+    /// Run the poll loop until the surrounding Task is cancelled or `stop()`
+    /// is called. Polls every `workspace.pollIntervalSeconds` and swallows
+    /// per-iteration errors (they're surfaced via `lastError`).
+    public func run() async {
+        isRunning = true
+        defer { isRunning = false }
+
+        while !Task.isCancelled && isRunning {
+            do {
+                try await poll()
+            } catch {
+                // lastError is already set inside poll()
+            }
+            let interval = UInt64(max(1, workspace.pollIntervalSeconds)) * 1_000_000_000
+            try? await Task.sleep(nanoseconds: interval)
+        }
+    }
+
+    public func stop() {
+        isRunning = false
+    }
+
+    // MARK: - Private
+
+    private func execute(
+        _ command: TimerCommand,
+        clockifyWorkspaceId: String,
+        clockifyUserId: String
+    ) async throws {
+        switch command {
+        case .start(let issue):
+            _ = try await clockifyClient.startTimer(
+                workspaceId: clockifyWorkspaceId,
+                description: "\(issue.identifier): \(issue.title)",
+                projectId: nil
+            )
+        case .stop:
+            _ = try await clockifyClient.stopRunningTimer(
+                workspaceId: clockifyWorkspaceId,
+                userId: clockifyUserId
+            )
+        case .updateDescription:
+            // Clockify PUT requires full entry replacement, deferred to later
+            // milestone. Description rename is rare and the next start/stop
+            // cycle will pick up the new title.
+            break
+        }
+    }
+}
