@@ -1,4 +1,7 @@
 import Foundation
+import os
+
+private let log = Logger(subsystem: "app.tymeline", category: "ClockifyClient")
 
 public enum ClockifyAPIError: Error, LocalizedError, Equatable {
     case invalidResponse
@@ -77,13 +80,17 @@ public actor ClockifyClient {
         var body: [String: Any] = [
             "start": isoFormatter.string(from: start),
             "description": description,
+            "billable": true,
         ]
         if let projectId { body["projectId"] = projectId }
+
+        log.info("startTimer POST workspaceId=\(workspaceId, privacy: .public) projectId=\(projectId ?? "nil", privacy: .public) desc=\(description, privacy: .public)")
 
         var request = makeRequest(method: "POST", path: "workspaces/\(workspaceId)/time-entries")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, _) = try await send(request, accepting: [200, 201])
+        let (data, http) = try await send(request, accepting: [200, 201])
+        log.info("startTimer response status=\(http.statusCode) body=\(String(data: data, encoding: .utf8) ?? "<binary>", privacy: .public)")
         return try JSONDecoder().decode(ClockifyTimeEntry.self, from: data)
     }
 
@@ -96,6 +103,8 @@ public actor ClockifyClient {
     ) async throws -> ClockifyTimeEntry? {
         let body: [String: Any] = ["end": isoFormatter.string(from: end)]
 
+        log.info("stopRunningTimer PATCH workspaceId=\(workspaceId, privacy: .public) userId=\(userId, privacy: .public)")
+
         var request = makeRequest(method: "PATCH", path: "workspaces/\(workspaceId)/user/\(userId)/time-entries")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
@@ -103,6 +112,9 @@ public actor ClockifyClient {
         guard let http = response as? HTTPURLResponse else {
             throw ClockifyAPIError.invalidResponse
         }
+
+        log.info("stopRunningTimer response status=\(http.statusCode) body=\(String(data: data, encoding: .utf8) ?? "<binary>", privacy: .public)")
+
         if http.statusCode == 404 { return nil }
         guard (200..<300).contains(http.statusCode) else {
             throw ClockifyAPIError.httpStatus(http.statusCode, body: String(data: data, encoding: .utf8))
