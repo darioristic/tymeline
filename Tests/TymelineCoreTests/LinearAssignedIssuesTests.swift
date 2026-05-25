@@ -69,13 +69,13 @@ final class LinearAssignedIssuesTests {
         #expect(started.stateName == "In Progress")
         #expect(started.assigneeId == "user-me")
         #expect(started.projectId == "proj-1")
-        #expect(started.isActiveForMe)
+        #expect(started.isActive(for: "user-me"))
 
         let unstarted = issues[1]
         #expect(unstarted.identifier == "ENG-160")
         #expect(unstarted.stateType == .unstarted)
         #expect(unstarted.projectId == nil)
-        #expect(!unstarted.isActiveForMe)
+        #expect(!unstarted.isActive(for: "user-me"))
     }
 
     @Test func handlesEmptyIssueList() async throws {
@@ -137,7 +137,7 @@ final class LinearAssignedIssuesTests {
         let issues = try await client.fetchAssignedIssues()
         #expect(issues.count == 1)
         #expect(issues[0].assigneeId == nil)
-        #expect(!issues[0].isActiveForMe)
+        #expect(!issues[0].isActive(for: "user-me"))
     }
 
     @Test func queryFiltersForUnstartedAndStarted() async throws {

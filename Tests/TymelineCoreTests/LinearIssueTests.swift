@@ -20,24 +20,36 @@ struct LinearIssueTests {
         )
     }
 
-    @Test func isActiveForMeTrueWhenStartedAndAssigned() {
+    @Test func isStartedTrueOnlyWhenStateIsStarted() {
+        #expect(make(stateType: .started).isStarted)
+        #expect(!make(stateType: .unstarted).isStarted)
+        #expect(!make(stateType: .completed).isStarted)
+        #expect(!make(stateType: .backlog).isStarted)
+    }
+
+    @Test func isActiveTrueWhenStartedAndAssigneeMatches() {
         let issue = make(stateType: .started, assigneeId: "user-me")
-        #expect(issue.isActiveForMe)
+        #expect(issue.isActive(for: "user-me"))
     }
 
-    @Test func isActiveForMeFalseWhenUnstartedEvenIfAssigned() {
+    @Test func isActiveFalseWhenUnstartedEvenIfAssigned() {
         let issue = make(stateType: .unstarted, assigneeId: "user-me")
-        #expect(!issue.isActiveForMe)
+        #expect(!issue.isActive(for: "user-me"))
     }
 
-    @Test func isActiveForMeFalseWhenCompletedEvenIfAssigned() {
+    @Test func isActiveFalseWhenCompletedEvenIfAssigned() {
         let issue = make(stateType: .completed, assigneeId: "user-me")
-        #expect(!issue.isActiveForMe)
+        #expect(!issue.isActive(for: "user-me"))
     }
 
-    @Test func isActiveForMeFalseWhenStartedButUnassigned() {
+    @Test func isActiveFalseWhenStartedButUnassigned() {
         let issue = make(stateType: .started, assigneeId: nil)
-        #expect(!issue.isActiveForMe)
+        #expect(!issue.isActive(for: "user-me"))
+    }
+
+    @Test func isActiveFalseWhenStartedButDifferentAssignee() {
+        let issue = make(stateType: .started, assigneeId: "user-other")
+        #expect(!issue.isActive(for: "user-me"))
     }
 
     @Test func codableRoundTrip() throws {

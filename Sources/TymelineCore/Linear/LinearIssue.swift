@@ -43,7 +43,14 @@ public struct LinearIssue: Codable, Equatable, Identifiable, Sendable {
         self.updatedAt = updatedAt
     }
 
-    public var isActiveForMe: Bool {
-        stateType == .started && assigneeId != nil
+    /// Convenience: state is `.started` regardless of assignee.
+    public var isStarted: Bool {
+        stateType == .started
+    }
+
+    /// "I should be tracking time on this issue right now": state is started
+    /// AND this user is the assignee.
+    public func isActive(for userId: String) -> Bool {
+        stateType == .started && assigneeId == userId
     }
 }
