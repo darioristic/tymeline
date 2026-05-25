@@ -51,6 +51,33 @@ public actor LinearClient {
         return response.viewer
     }
 
+    /// Fetches issues assigned to the current user in `unstarted` or `started`
+    /// states - the candidate set for the auto-timer. Ordered by most recently
+    /// updated (Linear's default).
+    public func fetchAssignedIssues() async throws -> [LinearIssue] {
+        let query = """
+        query MyAssignedIssues {
+          viewer {
+            assignedIssues(
+              filter: { state: { type: { in: ["unstarted", "started"] } } }
+            ) {
+              nodes {
+                id
+                identifier
+                title
+                state { id name type }
+                assignee { id }
+                project { id }
+                updatedAt
+              }
+            }
+          }
+        }
+        """
+        let response: LinearAssignedIssuesResponse = try await execute(query: query)
+        return response.toIssues()
+    }
+
     private func execute<T: Decodable & Sendable>(
         query: String,
         variables: [String: Any]? = nil
@@ -73,7 +100,9 @@ public actor LinearClient {
             throw LinearAPIError.httpStatus(httpResponse.statusCode)
         }
 
-        let decoded = try JSONDecoder().decode(LinearGraphQLResponse<T>.self, from: data)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decoded = try decoder.decode(LinearGraphQLResponse<T>.self, from: data)
 
         if let errors = decoded.errors, !errors.isEmpty {
             throw LinearAPIError.graphqlErrors(errors.map(\.message))
