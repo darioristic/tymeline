@@ -87,6 +87,7 @@ public actor LinearClient {
                 state { id name type }
                 assignee { id }
                 project { id }
+                parent { id }
                 updatedAt
               }
             }

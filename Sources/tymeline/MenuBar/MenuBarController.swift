@@ -101,24 +101,7 @@ final class MenuBarController {
                 empty.isEnabled = false
                 menu.addItem(empty)
             } else {
-                for issue in snapshot.assignedIssues {
-                    let badge = issue.stateType == .started ? "▶" : "·"
-                    let title = "  \(badge) \(issue.identifier) — \(issue.title)"
-                    let item = NSMenuItem(
-                        title: title,
-                        action: #selector(handleIssueClick(_:)),
-                        keyEquivalent: ""
-                    )
-                    item.target = self
-                    item.representedObject = IssueClickContext(
-                        workspaceId: snapshot.workspaceId,
-                        issue: issue
-                    )
-                    if snapshot.runningIssueId == issue.id {
-                        item.state = .on
-                    }
-                    menu.addItem(item)
-                }
+                appendGroupedIssueItems(to: menu, snapshot: snapshot)
             }
         }
 
@@ -150,6 +133,121 @@ final class MenuBarController {
         menu.addItem(quitItem)
 
         statusItem.menu = menu
+    }
+
+    private func appendGroupedIssueItems(to menu: NSMenu, snapshot: WorkspaceSnapshot) {
+        let workspaceId = snapshot.workspaceId
+        let issuesById = Dictionary(uniqueKeysWithValues: snapshot.assignedIssues.map { ($0.id, $0) })
+        let childrenByParent = Dictionary(
+            grouping: snapshot.assignedIssues.filter { $0.parentId != nil },
+            by: { $0.parentId! }
+        )
+
+        // Top-level: an issue with no parent, OR a parent not in the assigned list.
+        let topLevel = snapshot.assignedIssues.filter { issue in
+            guard let parentId = issue.parentId else { return true }
+            return issuesById[parentId] == nil
+        }
+
+        for issue in topLevel {
+            let children = childrenByParent[issue.id] ?? []
+            if children.isEmpty {
+                menu.addItem(makeIssueItem(issue, workspaceId: workspaceId, snapshot: snapshot))
+            } else {
+                menu.addItem(
+                    makeParentItem(
+                        issue,
+                        children: children,
+                        workspaceId: workspaceId,
+                        snapshot: snapshot
+                    )
+                )
+            }
+        }
+    }
+
+    private func makeIssueItem(
+        _ issue: LinearIssue,
+        workspaceId: UUID,
+        snapshot: WorkspaceSnapshot
+    ) -> NSMenuItem {
+        let isRunning = snapshot.runningIssueId == issue.id
+        let title = "\(issue.identifier) — \(issue.title)"
+        let item = NSMenuItem(
+            title: title,
+            action: #selector(handleIssueClick(_:)),
+            keyEquivalent: ""
+        )
+        item.target = self
+        item.representedObject = IssueClickContext(workspaceId: workspaceId, issue: issue)
+        item.image = stateIcon(stateType: issue.stateType, isRunning: isRunning)
+        if isRunning { item.state = .on }
+        return item
+    }
+
+    private func makeParentItem(
+        _ parent: LinearIssue,
+        children: [LinearIssue],
+        workspaceId: UUID,
+        snapshot: WorkspaceSnapshot
+    ) -> NSMenuItem {
+        let runningId = snapshot.runningIssueId
+        let parentRunning = runningId == parent.id
+        let anyChildRunning = children.contains { $0.id == runningId }
+        let title = "\(parent.identifier) — \(parent.title)"
+
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.image = stateIcon(
+            stateType: parent.stateType,
+            isRunning: parentRunning || anyChildRunning
+        )
+        if parentRunning || anyChildRunning { item.state = .mixed }
+
+        let submenu = NSMenu()
+
+        let parentLine = NSMenuItem(
+            title: "Start \(parent.identifier) (parent)",
+            action: #selector(handleIssueClick(_:)),
+            keyEquivalent: ""
+        )
+        parentLine.target = self
+        parentLine.representedObject = IssueClickContext(workspaceId: workspaceId, issue: parent)
+        parentLine.image = stateIcon(stateType: parent.stateType, isRunning: parentRunning)
+        if parentRunning { parentLine.state = .on }
+        submenu.addItem(parentLine)
+
+        submenu.addItem(NSMenuItem.separator())
+
+        for child in children {
+            submenu.addItem(makeIssueItem(child, workspaceId: workspaceId, snapshot: snapshot))
+        }
+
+        item.submenu = submenu
+        return item
+    }
+
+    private func stateIcon(stateType: LinearIssueStateType, isRunning: Bool) -> NSImage? {
+        let symbolName: String
+        let color: NSColor
+
+        if isRunning {
+            symbolName = "play.circle.fill"
+            color = .systemGreen
+        } else if stateType == .started {
+            symbolName = "play.circle.fill"
+            color = .systemBlue
+        } else {
+            symbolName = "circle"
+            color = .tertiaryLabelColor
+        }
+
+        guard let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil) else {
+            return nil
+        }
+
+        let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+            .applying(NSImage.SymbolConfiguration(paletteColors: [color]))
+        return image.withSymbolConfiguration(config)
     }
 
     @objc private func openSettingsAction() {

@@ -21,6 +21,7 @@ public struct LinearIssue: Codable, Equatable, Identifiable, Sendable {
     public let stateName: String        // "In Progress", "Done", etc.
     public let assigneeId: String?
     public let projectId: String?
+    public let parentId: String?        // id of parent issue if this is a sub-issue
     public let updatedAt: Date
 
     public init(
@@ -31,6 +32,7 @@ public struct LinearIssue: Codable, Equatable, Identifiable, Sendable {
         stateName: String,
         assigneeId: String?,
         projectId: String?,
+        parentId: String? = nil,
         updatedAt: Date
     ) {
         self.id = id
@@ -40,6 +42,7 @@ public struct LinearIssue: Codable, Equatable, Identifiable, Sendable {
         self.stateName = stateName
         self.assigneeId = assigneeId
         self.projectId = projectId
+        self.parentId = parentId
         self.updatedAt = updatedAt
     }
 

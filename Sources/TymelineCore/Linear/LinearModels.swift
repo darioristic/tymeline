@@ -65,6 +65,7 @@ struct LinearAssignedIssuesResponse: Decodable, Sendable {
         let state: StateNode
         let assignee: AssigneeNode?
         let project: ProjectNode?
+        let parent: ParentNode?
         let updatedAt: Date
     }
 
@@ -82,6 +83,10 @@ struct LinearAssignedIssuesResponse: Decodable, Sendable {
         let id: String
     }
 
+    struct ParentNode: Decodable, Sendable {
+        let id: String
+    }
+
     func toIssues() -> [LinearIssue] {
         viewer.assignedIssues.nodes.map { node in
             LinearIssue(
@@ -92,6 +97,7 @@ struct LinearAssignedIssuesResponse: Decodable, Sendable {
                 stateName: node.state.name,
                 assigneeId: node.assignee?.id,
                 projectId: node.project?.id,
+                parentId: node.parent?.id,
                 updatedAt: node.updatedAt
             )
         }
