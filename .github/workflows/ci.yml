@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate xcodeproj
+        run: xcodegen generate
+
+      - name: Build TymelineCore (SwiftPM)
+        run: swift build
+
+      - name: Test TymelineCore (SwiftPM)
+        run: swift test
+
+      - name: Build app target (xcodebuild)
+        run: |
+          xcodebuild \
+            -project tymeline.xcodeproj \
+            -scheme tymeline \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
