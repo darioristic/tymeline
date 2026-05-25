@@ -1,0 +1,51 @@
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# CocoaPods (only if we ever introduce it)
+Pods/
+
+# Carthage (only if we ever introduce it)
+Carthage/Build/
+
+# fastlane (only if we ever introduce it)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# Sparkle - NEVER commit private signing keys
+sparkle_private.pem
+*.priv
+ed25519_priv
+
+# Local env / config
+.env
+.env.local
+*.local
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Claude Code (local-only settings; .claude/settings.json may be shared if/when we add hooks)
+.claude/settings.local.json
