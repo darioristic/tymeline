@@ -1,5 +1,5 @@
 import Foundation
-import UserNotifications
+@preconcurrency import UserNotifications
 import os
 
 private let log = Logger(subsystem: "app.tymeline", category: "Notifications")
