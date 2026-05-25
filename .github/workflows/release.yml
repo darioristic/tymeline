@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name (e.g. v0.1.0) for manual runs'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Release
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            echo "name=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate xcodeproj
+        run: xcodegen generate
+
+      - name: Build Release app
+        run: |
+          xcodebuild \
+            -project tymeline.xcodeproj \
+            -scheme tymeline \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual \
+            build
+
+      - name: Zip app
+        id: zip
+        run: |
+          APP_PATH="build/Build/Products/Release/tymeline.app"
+          test -d "$APP_PATH" || { echo "App not found at $APP_PATH"; exit 1; }
+          ZIP_NAME="tymeline-${{ steps.tag.outputs.name }}-macos.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_NAME"
+          echo "path=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          shasum -a 256 "$ZIP_NAME" | tee "${ZIP_NAME}.sha256"
+
+      - name: Create / update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: tymeline ${{ steps.tag.outputs.name }}
+          generate_release_notes: true
+          files: |
+            ${{ steps.zip.outputs.path }}
+            ${{ steps.zip.outputs.path }}.sha256
+          body: |
+            **Install**
+
+            1. Download `${{ steps.zip.outputs.path }}` below and unzip.
+            2. Drag `tymeline.app` to `/Applications`.
+            3. First launch: right-click the app → **Open** (the build is
+               ad-hoc signed, so Gatekeeper requires confirmation once). After
+               that it launches normally.
+
+            Or run this from a terminal to skip the right-click dance:
+
+            ```bash
+            xattr -dr com.apple.quarantine /Applications/tymeline.app
+            open /Applications/tymeline.app
+            ```
+
+            See the README for full install options (Homebrew tap, build from source).
