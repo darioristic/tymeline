@@ -19,6 +19,9 @@ final class MenuBarController {
         coordinator.onStateChange = { [weak self] in
             self?.refresh()
         }
+        updater.onAvailabilityChange = { [weak self] in
+            self?.refresh()
+        }
     }
 
     private func configureButton() {
@@ -40,24 +43,33 @@ final class MenuBarController {
     private func updateButton() {
         guard let button = statusItem.button else { return }
 
+        let baseImage: NSImage?
         if let running = coordinator.firstRunningSnapshot,
            let identifier = running.runningIssueIdentifier,
            let title = running.runningIssueTitle {
-            button.image = NSImage(systemSymbolName: "clock.badge.checkmark", accessibilityDescription: "tymeline running")
-            button.image?.isTemplate = true
+            baseImage = NSImage(systemSymbolName: "clock.badge.checkmark", accessibilityDescription: "tymeline running")
             let elapsed = elapsedString(since: running.runningStartedAt)
             button.title = elapsed.map { " \(identifier) \($0)" } ?? " \(identifier)"
             button.toolTip = "tymeline: \(identifier) \(title)"
         } else if coordinator.hasErrorSnapshot {
-            button.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "tymeline error")
-            button.image?.isTemplate = true
+            baseImage = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "tymeline error")
             button.title = ""
             button.toolTip = "tymeline: error - see Settings"
         } else {
-            button.image = NSImage(systemSymbolName: "clock", accessibilityDescription: "tymeline idle")
-            button.image?.isTemplate = true
+            baseImage = NSImage(systemSymbolName: "clock", accessibilityDescription: "tymeline idle")
             button.title = ""
             button.toolTip = "tymeline (idle)"
+        }
+
+        guard let baseImage else { return }
+        baseImage.isTemplate = true
+
+        if let pendingVersion = updater.availableUpdateVersion {
+            button.image = baseImage.withUpdateBadge()
+            button.image?.isTemplate = false  // we want the red dot to stay red
+            button.toolTip = (button.toolTip ?? "") + " - update to \(pendingVersion) available"
+        } else {
+            button.image = baseImage
         }
     }
 
@@ -157,6 +169,22 @@ final class MenuBarController {
         }
 
         menu.addItem(NSMenuItem.separator())
+
+        if let pendingVersion = updater.availableUpdateVersion {
+            let pendingItem = NSMenuItem(
+                title: "Install update to \(pendingVersion)",
+                action: #selector(checkForUpdatesAction),
+                keyEquivalent: ""
+            )
+            pendingItem.target = self
+            // SF Symbol red dot to mirror the menubar badge
+            if let badge = NSImage(systemSymbolName: "circle.fill", accessibilityDescription: nil) {
+                let config = NSImage.SymbolConfiguration(pointSize: 10, weight: .regular)
+                    .applying(.init(paletteColors: [.systemRed]))
+                pendingItem.image = badge.withSymbolConfiguration(config)
+            }
+            menu.addItem(pendingItem)
+        }
 
         let updateItem = NSMenuItem(
             title: "Check for Updates...",
@@ -365,4 +393,31 @@ private final class IssueClickContext {
 private final class WorkspaceRef {
     let id: UUID
     init(id: UUID) { self.id = id }
+}
+
+private extension NSImage {
+    /// Returns a copy with a small red dot in the upper-right corner —
+    /// signals a Sparkle update is available without stealing focus.
+    /// The clock is re-tinted via sourceAtop so it stays the correct
+    /// menubar color while the dot keeps its red fill (template images
+    /// would otherwise tint the dot too).
+    func withUpdateBadge() -> NSImage {
+        let copy = NSImage(size: size, flipped: false) { rect in
+            self.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1.0)
+            NSColor.labelColor.set()
+            rect.fill(using: .sourceAtop)
+
+            let dotDiameter: CGFloat = max(4, rect.width * 0.32)
+            let dotRect = NSRect(
+                x: rect.maxX - dotDiameter - 0.5,
+                y: rect.maxY - dotDiameter - 0.5,
+                width: dotDiameter,
+                height: dotDiameter
+            )
+            NSColor.systemRed.setFill()
+            NSBezierPath(ovalIn: dotRect).fill()
+            return true
+        }
+        return copy
+    }
 }
