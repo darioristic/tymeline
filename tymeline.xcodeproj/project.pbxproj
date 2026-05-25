@@ -1,0 +1,396 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1D603A72A3F9E11AE2C13075 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65667E005EE3F18EA737D467 /* KeychainHelper.swift */; };
+		246139BE684854A9641AF721 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531CDC431536CC4E079ED114 /* MenuBarController.swift */; };
+		304702CE1A574E55A1D65B0E /* LinearModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CCB6E531754785F741588E /* LinearModels.swift */; };
+		3E87435CF71FF5B43294ECAD /* LinearClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC6270A19CDE897A99404E3 /* LinearClient.swift */; };
+		650C547D3514DB705AD01694 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A96CA9C1606F66AAF0C6F77C /* SettingsView.swift */; };
+		9591F986B6F9C0223A1284E3 /* ClockifyClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4351DF4AA9535F542E4935CD /* ClockifyClient.swift */; };
+		A5FA1C5B88596E6DCF9C8DD5 /* TymelineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */; };
+		A89E715462063DC088DED867 /* ClockifyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E76AD00D3E5420DB105DDD /* ClockifyModels.swift */; };
+		F1E1AA246E9493A19389E75A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC7C2AF3EFAA04522A3B86D /* AppDelegate.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		20CCB6E531754785F741588E /* LinearModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinearModels.swift; sourceTree = "<group>"; };
+		4351DF4AA9535F542E4935CD /* ClockifyClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockifyClient.swift; sourceTree = "<group>"; };
+		48E76AD00D3E5420DB105DDD /* ClockifyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockifyModels.swift; sourceTree = "<group>"; };
+		4D41519FB8D819E96136B6D3 /* tymeline.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tymeline.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		531CDC431536CC4E079ED114 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		65667E005EE3F18EA737D467 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TymelineApp.swift; sourceTree = "<group>"; };
+		A96CA9C1606F66AAF0C6F77C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		BBC6270A19CDE897A99404E3 /* LinearClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinearClient.swift; sourceTree = "<group>"; };
+		DFC7C2AF3EFAA04522A3B86D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0BF38F610156A0948BDD1198 /* Clockify */ = {
+			isa = PBXGroup;
+			children = (
+				4351DF4AA9535F542E4935CD /* ClockifyClient.swift */,
+				48E76AD00D3E5420DB105DDD /* ClockifyModels.swift */,
+			);
+			path = Clockify;
+			sourceTree = "<group>";
+		};
+		23F9FAD4EA52A6CD49C467E7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4D41519FB8D819E96136B6D3 /* tymeline.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		46AD169568213515A8C7D300 /* Keychain */ = {
+			isa = PBXGroup;
+			children = (
+				65667E005EE3F18EA737D467 /* KeychainHelper.swift */,
+			);
+			path = Keychain;
+			sourceTree = "<group>";
+		};
+		5CA47722C73AE50D38F23A1A /* App */ = {
+			isa = PBXGroup;
+			children = (
+				DFC7C2AF3EFAA04522A3B86D /* AppDelegate.swift */,
+				8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		609959C910ADB1110F7C0845 /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				531CDC431536CC4E079ED114 /* MenuBarController.swift */,
+			);
+			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		894ECE337E57203EF3356A5E /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				A96CA9C1606F66AAF0C6F77C /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		9AC25B050EC707D1F51FDFCA /* Linear */ = {
+			isa = PBXGroup;
+			children = (
+				BBC6270A19CDE897A99404E3 /* LinearClient.swift */,
+				20CCB6E531754785F741588E /* LinearModels.swift */,
+			);
+			path = Linear;
+			sourceTree = "<group>";
+		};
+		A4439D4ED2EA3598BA998166 = {
+			isa = PBXGroup;
+			children = (
+				CB2F91D7FF859A8CDCFE9FED /* Sources */,
+				23F9FAD4EA52A6CD49C467E7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A95424D29BDCD23EB42F2DCB /* tymeline */ = {
+			isa = PBXGroup;
+			children = (
+				5CA47722C73AE50D38F23A1A /* App */,
+				0BF38F610156A0948BDD1198 /* Clockify */,
+				46AD169568213515A8C7D300 /* Keychain */,
+				9AC25B050EC707D1F51FDFCA /* Linear */,
+				609959C910ADB1110F7C0845 /* MenuBar */,
+				894ECE337E57203EF3356A5E /* Settings */,
+			);
+			path = tymeline;
+			sourceTree = "<group>";
+		};
+		CB2F91D7FF859A8CDCFE9FED /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				A95424D29BDCD23EB42F2DCB /* tymeline */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		783287130D67C6BFD13D6705 /* tymeline */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9C4E5BBA2E0330DE594165F2 /* Build configuration list for PBXNativeTarget "tymeline" */;
+			buildPhases = (
+				7A0F4F49C93140D4B2582E0E /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = tymeline;
+			packageProductDependencies = (
+			);
+			productName = tymeline;
+			productReference = 4D41519FB8D819E96136B6D3 /* tymeline.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CBA9EF078BC13CD10D3E2A0D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					783287130D67C6BFD13D6705 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = CBB44CB1F93C4B86DBC5B585 /* Build configuration list for PBXProject "tymeline" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = A4439D4ED2EA3598BA998166;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 23F9FAD4EA52A6CD49C467E7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				783287130D67C6BFD13D6705 /* tymeline */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7A0F4F49C93140D4B2582E0E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1E1AA246E9493A19389E75A /* AppDelegate.swift in Sources */,
+				9591F986B6F9C0223A1284E3 /* ClockifyClient.swift in Sources */,
+				A89E715462063DC088DED867 /* ClockifyModels.swift in Sources */,
+				1D603A72A3F9E11AE2C13075 /* KeychainHelper.swift in Sources */,
+				3E87435CF71FF5B43294ECAD /* LinearClient.swift in Sources */,
+				304702CE1A574E55A1D65B0E /* LinearModels.swift in Sources */,
+				246139BE684854A9641AF721 /* MenuBarController.swift in Sources */,
+				650C547D3514DB705AD01694 /* SettingsView.swift in Sources */,
+				A5FA1C5B88596E6DCF9C8DD5 /* TymelineApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		19651C29288150FA3887303A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = app.tymeline;
+				PRODUCT_NAME = tymeline;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		6BB7AFBC41B87F4C053BA0A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/tymeline.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = tymeline;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright (c) 2026 Dario Risto. MIT License.";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		76B93D3529F49248D479DEA4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = app.tymeline;
+				PRODUCT_NAME = tymeline;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		BC5D8979A32AE22C9E625886 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/tymeline.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = tymeline;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright (c) 2026 Dario Risto. MIT License.";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9C4E5BBA2E0330DE594165F2 /* Build configuration list for PBXNativeTarget "tymeline" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC5D8979A32AE22C9E625886 /* Debug */,
+				6BB7AFBC41B87F4C053BA0A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CBB44CB1F93C4B86DBC5B585 /* Build configuration list for PBXProject "tymeline" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				19651C29288150FA3887303A /* Debug */,
+				76B93D3529F49248D479DEA4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CBA9EF078BC13CD10D3E2A0D /* Project object */;
+}

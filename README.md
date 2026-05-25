@@ -16,7 +16,7 @@ If you track time in Clockify against tasks in Linear, you probably forget to st
 
 Not yet released. v1.0 will be available via Homebrew:
 
-```
+```bash
 brew tap darioristic/tap
 brew install --cask tymeline
 ```
@@ -25,10 +25,17 @@ brew install --cask tymeline
 
 Requires macOS 14+, Xcode 16+, Swift 6.
 
-```
+```bash
 git clone https://github.com/darioristic/tymeline.git
 cd tymeline
 open tymeline.xcodeproj
+```
+
+The Xcode project is generated from [project.yml](project.yml) using [XcodeGen](https://github.com/yonaskolb/XcodeGen). If you change project structure (add files, modify build settings), regenerate with:
+
+```bash
+brew install xcodegen   # one-time
+xcodegen generate
 ```
 
 ## License
