@@ -147,8 +147,11 @@ jobs:
           PUB_DATE=$(date -u "+%a, %d %b %Y %H:%M:%S +0000")
           ZIP_URL="https://github.com/darioristic/tymeline/releases/download/v${VERSION}/${{ steps.zip.outputs.path }}"
 
+          # xcodebuild and build steps leave the working tree dirty
+          # (project.pbxproj timestamps, derived data refs); discard those
+          # transient changes before switching branches.
           git fetch origin main
-          git checkout main
+          git checkout -f main
 
           # 1. Bump cask
           /usr/bin/sed -i '' -E "s/^  version \".*\"/  version \"${VERSION}\"/" Casks/tymeline.rb
