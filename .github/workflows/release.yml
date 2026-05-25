@@ -63,6 +63,12 @@ jobs:
           echo "path=$ZIP_NAME" >> "$GITHUB_OUTPUT"
           shasum -a 256 "$ZIP_NAME" | tee "${ZIP_NAME}.sha256"
 
+      - name: Compute SHA256 for cask
+        id: sha
+        run: |
+          SHA=$(shasum -a 256 "${{ steps.zip.outputs.path }}" | awk '{print $1}')
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+
       - name: Create / update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -73,19 +79,42 @@ jobs:
             ${{ steps.zip.outputs.path }}
             ${{ steps.zip.outputs.path }}.sha256
           body: |
-            **Install**
+            **Install via Homebrew**
+
+            ```bash
+            brew tap darioristic/tymeline https://github.com/darioristic/tymeline
+            brew install --cask darioristic/tymeline/tymeline
+            ```
+
+            **Or download manually**
 
             1. Download `${{ steps.zip.outputs.path }}` below and unzip.
             2. Drag `tymeline.app` to `/Applications`.
-            3. First launch: right-click the app → **Open** (the build is
-               ad-hoc signed, so Gatekeeper requires confirmation once). After
-               that it launches normally.
+            3. First launch: right-click the app → **Open** (ad-hoc signed
+               build, so Gatekeeper asks for confirmation once).
+               Or skip the dance:
+               `xattr -dr com.apple.quarantine /Applications/tymeline.app`
 
-            Or run this from a terminal to skip the right-click dance:
+      - name: Update Casks/tymeline.rb on main
+        run: |
+          VERSION="${{ steps.tag.outputs.name }}"
+          VERSION="${VERSION#v}"
+          SHA="${{ steps.sha.outputs.sha256 }}"
 
-            ```bash
-            xattr -dr com.apple.quarantine /Applications/tymeline.app
-            open /Applications/tymeline.app
-            ```
+          git fetch origin main
+          git checkout main
 
-            See the README for full install options (Homebrew tap, build from source).
+          # Replace the version "X.Y.Z" and sha256 "..." lines in-place
+          /usr/bin/sed -i '' -E "s/^  version \".*\"/  version \"${VERSION}\"/" Casks/tymeline.rb
+          /usr/bin/sed -i '' -E "s/^  sha256 \".*\"/  sha256 \"${SHA}\"/" Casks/tymeline.rb
+
+          if git diff --quiet Casks/tymeline.rb; then
+            echo "Cask already up to date."
+            exit 0
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/tymeline.rb
+          git commit -m "Bump Casks/tymeline.rb to ${VERSION}"
+          git push origin main
