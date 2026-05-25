@@ -21,14 +21,17 @@ final class AppCoordinator {
     var onStateChange: (() -> Void)?
 
     private let storage: WorkspaceStorage
+    private let notifications: NotificationService
     private var controllers: [UUID: WorkspaceController] = [:]
     private var pollTasks: [UUID: Task<Void, Never>] = [:]
 
-    init(storage: WorkspaceStorage) {
+    init(storage: WorkspaceStorage, notifications: NotificationService = NotificationService()) {
         self.storage = storage
+        self.notifications = notifications
     }
 
     func bootstrap() async {
+        await notifications.requestAuthorization()
         do {
             let workspaces = try await storage.load()
             for workspace in workspaces {
@@ -96,19 +99,30 @@ final class AppCoordinator {
         do {
             try await controller.startTimer(for: issue)
             actionError = nil
+            notifications.notifyStarted(identifier: issue.identifier, title: issue.title)
         } catch {
             actionError = error.localizedDescription
+            notifications.notifyError("Start \(issue.identifier) failed: \(error.localizedDescription)")
         }
         onStateChange?()
     }
 
     func stopRunningTimer(workspaceId: UUID) async {
         guard let controller = controllers[workspaceId] else { return }
+        let stoppedSnapshot = snapshots.first(where: { $0.workspaceId == workspaceId })
+        let stoppedIdentifier = stoppedSnapshot?.runningIssueIdentifier
+        let stoppedStartedAt = stoppedSnapshot?.runningStartedAt
+
         do {
             try await controller.stopRunningTimer()
             actionError = nil
+            if let identifier = stoppedIdentifier {
+                let elapsed = stoppedStartedAt.map { Date().timeIntervalSince($0) } ?? 0
+                notifications.notifyStopped(identifier: identifier, duration: elapsed)
+            }
         } catch {
             actionError = error.localizedDescription
+            notifications.notifyError("Stop failed: \(error.localizedDescription)")
         }
         onStateChange?()
     }
