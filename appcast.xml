@@ -5,5 +5,12 @@
     <link>https://raw.githubusercontent.com/darioristic/tymeline/main/appcast.xml</link>
     <description>Latest tymeline updates</description>
     <language>en</language>
+    <item>
+      <title>Version 0.1.4</title>
+      <sparkle:version>0.1.4</sparkle:version>
+      <sparkle:shortVersionString>0.1.4</sparkle:shortVersionString>
+      <pubDate>Mon, 25 May 2026 21:19:41 +0000</pubDate>
+      <enclosure url="https://github.com/darioristic/tymeline/releases/download/v0.1.4/tymeline-v0.1.4-macos.zip" type="application/octet-stream" length="1574811" sparkle:edSignature="L0RNIr+qZ+XwP1evcDaWdwMp17EIv0eVc7wWg3UsmEe94I0c4sLpKqviQzHuWAcV42kkgD2c4sZ7MgbhgXcnBg=="/>
+    </item>
   </channel>
 </rss>
