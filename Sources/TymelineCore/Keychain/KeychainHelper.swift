@@ -116,17 +116,31 @@ public enum KeychainHelper {
 
     /// Deletes ALL keychain items for the given service. Use in test teardown
     /// or when a user wipes a workspace. Be careful with the default service.
+    ///
+    /// `SecItemDelete` by default deletes only the first match, so we enumerate
+    /// every account for the service and delete them individually.
     public static func deleteAll(in service: String) throws {
-        let query: [String: Any] = [
+        let findQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+            kSecReturnAttributes as String: true,
         ]
-        let status = SecItemDelete(query as CFDictionary)
-        switch status {
-        case errSecSuccess, errSecItemNotFound:
+
+        var items: CFTypeRef?
+        let findStatus = SecItemCopyMatching(findQuery as CFDictionary, &items)
+
+        switch findStatus {
+        case errSecSuccess:
+            guard let array = items as? [[String: Any]] else { return }
+            for attrs in array {
+                guard let account = attrs[kSecAttrAccount as String] as? String else { continue }
+                try deleteSecret(for: account, in: service)
+            }
+        case errSecItemNotFound:
             return
         default:
-            throw KeychainError.unexpectedStatus(status)
+            throw KeychainError.unexpectedStatus(findStatus)
         }
     }
 }
