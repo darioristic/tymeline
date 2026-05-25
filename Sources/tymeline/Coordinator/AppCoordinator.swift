@@ -156,6 +156,7 @@ final class AppCoordinator {
                     runningIssueId: nil,
                     runningIssueIdentifier: nil,
                     runningIssueTitle: nil,
+                    runningStartedAt: nil,
                     lastErrorDescription: nil,
                     lastPollAt: nil
                 )

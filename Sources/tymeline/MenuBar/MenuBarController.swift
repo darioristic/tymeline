@@ -6,6 +6,7 @@ final class MenuBarController {
     private let statusItem: NSStatusItem
     private let coordinator: AppCoordinator
     private let openSettings: () -> Void
+    private var tickTimer: Timer?
 
     init(coordinator: AppCoordinator, openSettings: @escaping () -> Void) {
         self.coordinator = coordinator
@@ -22,10 +23,19 @@ final class MenuBarController {
         guard let button = statusItem.button else { return }
         button.image = NSImage(systemSymbolName: "clock", accessibilityDescription: "tymeline")
         button.image?.isTemplate = true
+        button.imagePosition = .imageLeading
         button.toolTip = "tymeline (idle)"
     }
 
     private func refresh() {
+        updateButton()
+        rebuildMenu()
+        updateTickTimer()
+    }
+
+    /// Refreshes only the menubar button (icon + title). Cheap: safe to call
+    /// every second from the tick timer without rebuilding the dropdown menu.
+    private func updateButton() {
         guard let button = statusItem.button else { return }
 
         if let running = coordinator.firstRunningSnapshot,
@@ -33,17 +43,48 @@ final class MenuBarController {
            let title = running.runningIssueTitle {
             button.image = NSImage(systemSymbolName: "clock.badge.checkmark", accessibilityDescription: "tymeline running")
             button.image?.isTemplate = true
+            let elapsed = elapsedString(since: running.runningStartedAt)
+            button.title = elapsed.map { " \(identifier) \($0)" } ?? " \(identifier)"
             button.toolTip = "tymeline: \(identifier) \(title)"
         } else if coordinator.hasErrorSnapshot {
             button.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "tymeline error")
             button.image?.isTemplate = true
+            button.title = ""
             button.toolTip = "tymeline: error - see Settings"
         } else {
             button.image = NSImage(systemSymbolName: "clock", accessibilityDescription: "tymeline idle")
             button.image?.isTemplate = true
+            button.title = ""
             button.toolTip = "tymeline (idle)"
         }
-        rebuildMenu()
+    }
+
+    private func updateTickTimer() {
+        let shouldTick = coordinator.firstRunningSnapshot?.runningStartedAt != nil
+        if shouldTick, tickTimer == nil {
+            let timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+                Task { @MainActor in
+                    self?.updateButton()
+                }
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            tickTimer = timer
+        } else if !shouldTick, let timer = tickTimer {
+            timer.invalidate()
+            tickTimer = nil
+        }
+    }
+
+    private func elapsedString(since start: Date?) -> String? {
+        guard let start else { return nil }
+        let seconds = max(0, Int(Date().timeIntervalSince(start)))
+        let h = seconds / 3600
+        let m = (seconds % 3600) / 60
+        let s = seconds % 60
+        if h > 0 {
+            return String(format: "%d:%02d:%02d", h, m, s)
+        }
+        return String(format: "%d:%02d", m, s)
     }
 
     private func rebuildMenu() {

@@ -32,6 +32,7 @@ public struct WorkspaceSnapshot: Sendable, Equatable {
     public let runningIssueId: String?
     public let runningIssueIdentifier: String?
     public let runningIssueTitle: String?
+    public let runningStartedAt: Date?
     public let lastErrorDescription: String?
     public let lastPollAt: Date?
 
@@ -42,6 +43,7 @@ public struct WorkspaceSnapshot: Sendable, Equatable {
         runningIssueId: String?,
         runningIssueIdentifier: String?,
         runningIssueTitle: String?,
+        runningStartedAt: Date?,
         lastErrorDescription: String?,
         lastPollAt: Date?
     ) {
@@ -51,6 +53,7 @@ public struct WorkspaceSnapshot: Sendable, Equatable {
         self.runningIssueId = runningIssueId
         self.runningIssueIdentifier = runningIssueIdentifier
         self.runningIssueTitle = runningIssueTitle
+        self.runningStartedAt = runningStartedAt
         self.lastErrorDescription = lastErrorDescription
         self.lastPollAt = lastPollAt
     }
@@ -79,6 +82,17 @@ public actor WorkspaceController {
     private let clockifyClient: ClockifyClient
     private var onSnapshotChange: (@Sendable (WorkspaceSnapshot) -> Void)?
     private var runningIssueMetadata: (identifier: String, title: String)?
+    private var runningStartedAt: Date?
+    private let isoParser: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private let isoParserNoFractional: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
 
     public init(
         workspace: Workspace,
@@ -104,6 +118,7 @@ public actor WorkspaceController {
             runningIssueId: currentRunningIssueId,
             runningIssueIdentifier: runningIssueMetadata?.identifier,
             runningIssueTitle: runningIssueMetadata?.title,
+            runningStartedAt: runningStartedAt,
             lastErrorDescription: lastError?.localizedDescription,
             lastPollAt: lastPollAt
         )
@@ -182,13 +197,14 @@ public actor WorkspaceController {
             )
         }
 
-        _ = try await clockifyClient.startTimer(
+        let entry = try await clockifyClient.startTimer(
             workspaceId: clockifyWorkspaceId,
             description: "\(issue.identifier): \(issue.title)",
             projectId: clockifyProjectId
         )
         currentRunningIssueId = issue.id
         runningIssueMetadata = (issue.identifier, issue.title)
+        runningStartedAt = parseISO(entry.timeInterval.start) ?? Date()
         onSnapshotChange?(snapshot())
     }
 
@@ -204,7 +220,12 @@ public actor WorkspaceController {
         )
         currentRunningIssueId = nil
         runningIssueMetadata = nil
+        runningStartedAt = nil
         onSnapshotChange?(snapshot())
+    }
+
+    private func parseISO(_ string: String) -> Date? {
+        isoParser.date(from: string) ?? isoParserNoFractional.date(from: string)
     }
 
     /// Concurrent fetch of Linear and Clockify project lists for the
