@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1809447220F3F23E0687C94A /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D8C170A2A631B7F31862E2A /* SettingsWindowController.swift */; };
 		246139BE684854A9641AF721 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531CDC431536CC4E079ED114 /* MenuBarController.swift */; };
 		650C547D3514DB705AD01694 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A96CA9C1606F66AAF0C6F77C /* SettingsView.swift */; };
 		6715780618A85FEA31EBC87C /* TymelineCore in Frameworks */ = {isa = PBXBuildFile; productRef = F4514F7307ED8D60D4E33144 /* TymelineCore */; };
@@ -17,6 +18,7 @@
 
 /* Begin PBXFileReference section */
 		06AABC79D2EDDA5999C97CC1 /* coorpix-time-sync */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "coorpix-time-sync"; path = .; sourceTree = SOURCE_ROOT; };
+		0D8C170A2A631B7F31862E2A /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		4D41519FB8D819E96136B6D3 /* tymeline.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tymeline.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		531CDC431536CC4E079ED114 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TymelineApp.swift; sourceTree = "<group>"; };
@@ -74,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				A96CA9C1606F66AAF0C6F77C /* SettingsView.swift */,
+				0D8C170A2A631B7F31862E2A /* SettingsWindowController.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -182,6 +185,7 @@
 				F1E1AA246E9493A19389E75A /* AppDelegate.swift in Sources */,
 				246139BE684854A9641AF721 /* MenuBarController.swift in Sources */,
 				650C547D3514DB705AD01694 /* SettingsView.swift in Sources */,
+				1809447220F3F23E0687C94A /* SettingsWindowController.swift in Sources */,
 				A5FA1C5B88596E6DCF9C8DD5 /* TymelineApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

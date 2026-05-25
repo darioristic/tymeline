@@ -5,6 +5,7 @@ import TymelineCore
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let coordinator: AppCoordinator
     private var menuBarController: MenuBarController?
+    private var settingsWindowController: SettingsWindowController?
 
     override init() {
         let storage: WorkspaceStorage
@@ -18,7 +19,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        menuBarController = MenuBarController(coordinator: coordinator)
+        let settingsController = SettingsWindowController(coordinator: coordinator)
+        self.settingsWindowController = settingsController
+
+        menuBarController = MenuBarController(
+            coordinator: coordinator,
+            openSettings: { [weak settingsController] in
+                settingsController?.showWindow()
+            }
+        )
 
         Task { @MainActor in
             await coordinator.bootstrap()

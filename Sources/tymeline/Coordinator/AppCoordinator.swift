@@ -12,6 +12,12 @@ final class AppCoordinator {
     var snapshots: [WorkspaceSnapshot] = []
     var setupError: String?
 
+    /// Imperative callback for non-SwiftUI observers (e.g. NSStatusItem).
+    /// Set once; called on the main actor whenever `snapshots` or
+    /// `setupError` changes.
+    @ObservationIgnored
+    var onStateChange: (() -> Void)?
+
     private let storage: WorkspaceStorage
     private var controllers: [UUID: WorkspaceController] = [:]
     private var pollTasks: [UUID: Task<Void, Never>] = [:]
@@ -116,9 +122,11 @@ final class AppCoordinator {
 
     private func applySnapshot(_ snapshot: WorkspaceSnapshot) {
         if let idx = snapshots.firstIndex(where: { $0.workspaceId == snapshot.workspaceId }) {
+            if snapshots[idx] == snapshot { return }
             snapshots[idx] = snapshot
         } else {
             snapshots.append(snapshot)
         }
+        onStateChange?()
     }
 }
