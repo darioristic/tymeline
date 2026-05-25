@@ -20,26 +20,127 @@ let baseSize = 1024
 let img = NSImage(size: NSSize(width: baseSize, height: baseSize))
 img.lockFocus()
 
-let bgRect = NSRect(x: 0, y: 0, width: baseSize, height: baseSize)
+guard let ctx = NSGraphicsContext.current?.cgContext else {
+    fputs("Could not get CGContext\n", stderr)
+    exit(1)
+}
+
+let canvas = NSRect(x: 0, y: 0, width: baseSize, height: baseSize)
 // macOS Big Sur+ icon corner radius is ~18% of side
 let cornerRadius = CGFloat(baseSize) * 0.18
-let bgPath = NSBezierPath(roundedRect: bgRect, xRadius: cornerRadius, yRadius: cornerRadius)
-NSColor.systemBlue.setFill()
-bgPath.fill()
 
-// Clock symbol, white, centered ~60% of canvas
-let symbol = NSImage(systemSymbolName: "clock.fill", accessibilityDescription: nil)!
-let symbolConfig = NSImage.SymbolConfiguration(pointSize: 640, weight: .regular)
-    .applying(.init(paletteColors: [.white]))
-let tinted = symbol.withSymbolConfiguration(symbolConfig)!
-let inset = CGFloat(baseSize) * 0.20
-let symbolRect = NSRect(
-    x: inset,
-    y: inset,
-    width: CGFloat(baseSize) - inset * 2,
-    height: CGFloat(baseSize) - inset * 2
+// Squircle clip + subtle vertical gradient background (deep black → off-black)
+let bgPath = NSBezierPath(roundedRect: canvas, xRadius: cornerRadius, yRadius: cornerRadius)
+ctx.saveGState()
+bgPath.addClip()
+
+let gradient = NSGradient(colors: [
+    NSColor(calibratedRed: 0.12, green: 0.12, blue: 0.13, alpha: 1.0),  // top, soft graphite
+    NSColor(calibratedRed: 0.02, green: 0.02, blue: 0.03, alpha: 1.0),  // bottom, near-black
+])!
+gradient.draw(in: canvas, angle: -90)
+
+// Inner clock dial - white face, slightly inset from the squircle
+let center = NSPoint(x: CGFloat(baseSize) / 2, y: CGFloat(baseSize) / 2)
+let dialRadius = CGFloat(baseSize) * 0.30  // 30% of canvas radius
+let dialRect = NSRect(
+    x: center.x - dialRadius,
+    y: center.y - dialRadius,
+    width: dialRadius * 2,
+    height: dialRadius * 2
 )
-tinted.draw(in: symbolRect, from: .zero, operation: .sourceOver, fraction: 1.0)
+
+// Faint outer ring to add depth around the dial
+let ringInset: CGFloat = 14
+let outerRingRect = dialRect.insetBy(dx: -ringInset, dy: -ringInset)
+let ringPath = NSBezierPath(ovalIn: outerRingRect)
+NSColor(calibratedWhite: 1.0, alpha: 0.06).setStroke()
+ringPath.lineWidth = 4
+ringPath.stroke()
+
+// White dial
+let dialPath = NSBezierPath(ovalIn: dialRect)
+NSColor.white.setFill()
+dialPath.fill()
+
+// Thin gray border on the dial for definition
+NSColor(calibratedWhite: 0.85, alpha: 1.0).setStroke()
+dialPath.lineWidth = 2
+dialPath.stroke()
+
+// 12 hour markers - small black ticks around the dial
+// Major (12, 3, 6, 9) are longer/thicker, minor are smaller
+let markerOuter = dialRadius * 0.92
+let markerInnerMajor = dialRadius * 0.78
+let markerInnerMinor = dialRadius * 0.85
+
+for hour in 0..<12 {
+    // 12 o'clock points up (angle = 90° in standard cartesian), advance clockwise
+    let angle = CGFloat.pi / 2 - CGFloat(hour) * (CGFloat.pi / 6)
+    let isMajor = hour % 3 == 0
+    let inner = isMajor ? markerInnerMajor : markerInnerMinor
+
+    let outerPt = NSPoint(
+        x: center.x + cos(angle) * markerOuter,
+        y: center.y + sin(angle) * markerOuter
+    )
+    let innerPt = NSPoint(
+        x: center.x + cos(angle) * inner,
+        y: center.y + sin(angle) * inner
+    )
+
+    let tick = NSBezierPath()
+    tick.move(to: outerPt)
+    tick.line(to: innerPt)
+    tick.lineWidth = isMajor ? 8 : 4
+    tick.lineCapStyle = .round
+    NSColor.black.setStroke()
+    tick.stroke()
+}
+
+// Hands at 10:10 (the classic clock-ad time, also frames a smile shape)
+// Hour hand: points to 10 - angle = 90° + 60° = 150° (since 10 is 2 hours back from 12)
+let hourAngle = CGFloat.pi / 2 + (CGFloat.pi / 6) * 2  // 10 o'clock
+let hourLength = dialRadius * 0.55
+let hourEnd = NSPoint(
+    x: center.x + cos(hourAngle) * hourLength,
+    y: center.y + sin(hourAngle) * hourLength
+)
+let hourPath = NSBezierPath()
+hourPath.move(to: center)
+hourPath.line(to: hourEnd)
+hourPath.lineWidth = 18
+hourPath.lineCapStyle = .round
+NSColor.black.setStroke()
+hourPath.stroke()
+
+// Minute hand: points to 2 (10:10) - angle = 90° - 60° = 30°
+let minuteAngle = CGFloat.pi / 2 - (CGFloat.pi / 6) * 2  // 2 o'clock
+let minuteLength = dialRadius * 0.78
+let minuteEnd = NSPoint(
+    x: center.x + cos(minuteAngle) * minuteLength,
+    y: center.y + sin(minuteAngle) * minuteLength
+)
+let minutePath = NSBezierPath()
+minutePath.move(to: center)
+minutePath.line(to: minuteEnd)
+minutePath.lineWidth = 14
+minutePath.lineCapStyle = .round
+NSColor.black.setStroke()
+minutePath.stroke()
+
+// Center cap - small black dot covering the hand pivot
+let capRadius: CGFloat = 18
+let capRect = NSRect(
+    x: center.x - capRadius,
+    y: center.y - capRadius,
+    width: capRadius * 2,
+    height: capRadius * 2
+)
+NSColor.black.setFill()
+NSBezierPath(ovalIn: capRect).fill()
+
+ctx.restoreGState()
 
 img.unlockFocus()
 
