@@ -156,6 +156,35 @@ final class AppCoordinator {
         onStateChange?()
     }
 
+    /// Tears down a workspace: cancels polling, drops all in-memory state,
+    /// removes it from on-disk storage, and clears Keychain secrets so the
+    /// API keys aren't left behind after the user removes a workspace.
+    func removeWorkspace(workspaceId: UUID) async {
+        pollTasks[workspaceId]?.cancel()
+        pollTasks.removeValue(forKey: workspaceId)
+        controllers.removeValue(forKey: workspaceId)
+
+        snapshots.removeAll(where: { $0.workspaceId == workspaceId })
+        workspaceProjects.removeValue(forKey: workspaceId)
+        workspaceMappings.removeValue(forKey: workspaceId)
+        projectsError.removeValue(forKey: workspaceId)
+
+        do {
+            var all = try await storage.load()
+            all.removeAll(where: { $0.id == workspaceId })
+            try await storage.save(all)
+        } catch {
+            actionError = "Failed to update storage: \(error.localizedDescription)"
+        }
+
+        let linearAccount = KeychainHelper.accountName(service: .linear, workspaceId: workspaceId.uuidString)
+        let clockifyAccount = KeychainHelper.accountName(service: .clockify, workspaceId: workspaceId.uuidString)
+        try? KeychainHelper.deleteSecret(for: linearAccount)
+        try? KeychainHelper.deleteSecret(for: clockifyAccount)
+
+        onStateChange?()
+    }
+
     func stopRunningTimer(workspaceId: UUID) async {
         guard let controller = controllers[workspaceId] else { return }
         let stoppedSnapshot = snapshots.first(where: { $0.workspaceId == workspaceId })

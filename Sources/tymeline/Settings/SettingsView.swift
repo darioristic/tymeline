@@ -15,9 +15,22 @@ struct SettingsView: View {
             AboutTab()
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .padding(20)
-        .frame(minWidth: 640, minHeight: 480)
+        .frame(minWidth: 680, minHeight: 520)
     }
+}
+
+private struct TabPadding: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, 28)
+            .padding(.top, 20)
+            .padding(.bottom, 16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+private extension View {
+    func tabPadding() -> some View { modifier(TabPadding()) }
 }
 
 private struct WorkspacesTab: View {
@@ -33,7 +46,7 @@ private struct WorkspacesTab: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 20) {
                 Text("Workspaces").font(.title2)
 
                 if coordinator.snapshots.isEmpty {
@@ -57,12 +70,24 @@ private struct WorkspacesTab: View {
 
                 Divider().padding(.vertical, 4)
 
-                GroupBox(label: Text("Add workspace").font(.headline)) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Form {
+                GroupBox(label: Text("Add workspace").font(.headline).padding(.bottom, 4)) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 8) {
                             TextField("Name", text: $name, prompt: Text("e.g. Work"))
+
                             SecureField("Linear API key", text: $linearKey)
+                            keyHint(
+                                "Get key at",
+                                linkTitle: "linear.app/settings/api",
+                                url: "https://linear.app/settings/api"
+                            )
+
                             SecureField("Clockify API key", text: $clockifyKey)
+                            keyHint(
+                                "Get key at",
+                                linkTitle: "app.clockify.me/user/settings",
+                                url: "https://app.clockify.me/user/settings"
+                            )
                         }
 
                         if let err = errorMessage {
@@ -86,12 +111,24 @@ private struct WorkspacesTab: View {
                             Spacer()
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 4)
                 }
             }
-            .padding(.vertical, 4)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .tabPadding()
+    }
+
+    @ViewBuilder
+    private func keyHint(_ prefix: String, linkTitle: String, url: String) -> some View {
+        HStack(spacing: 4) {
+            Text(prefix)
+                .foregroundStyle(.tertiary)
+                .font(.caption)
+            Link(linkTitle, destination: URL(string: url)!)
+                .font(.caption)
+            Spacer()
+        }
     }
 
     private func connect() {
@@ -131,6 +168,8 @@ private struct WorkspaceCard: View {
     let snapshot: WorkspaceSnapshot
     let coordinator: AppCoordinator
 
+    @State private var showRemoveConfirm = false
+
     var body: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 8) {
@@ -139,11 +178,13 @@ private struct WorkspaceCard: View {
                     Text(snapshot.workspaceName).font(.headline)
                     statusBadge
                     Spacer()
-                    if let pollAt = snapshot.lastPollAt {
-                        Text("Last poll \(pollAt, format: .dateTime.hour().minute().second())")
-                            .foregroundStyle(.tertiary)
-                            .font(.caption)
+                    Button(role: .destructive) {
+                        showRemoveConfirm = true
+                    } label: {
+                        Image(systemName: "trash")
                     }
+                    .buttonStyle(.borderless)
+                    .help("Remove workspace")
                 }
 
                 if let identifier = snapshot.runningIssueIdentifier,
@@ -174,6 +215,19 @@ private struct WorkspaceCard: View {
                 .font(.caption)
             }
             .padding(.vertical, 4)
+        }
+        .confirmationDialog(
+            "Remove workspace '\(snapshot.workspaceName)'?",
+            isPresented: $showRemoveConfirm
+        ) {
+            Button("Remove", role: .destructive) {
+                Task { @MainActor in
+                    await coordinator.removeWorkspace(workspaceId: snapshot.workspaceId)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This deletes the workspace configuration and API keys from your Keychain. Existing Clockify entries are not affected.")
         }
     }
 
@@ -237,7 +291,7 @@ private struct ProjectsTab: View {
     @State private var saveError: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 18) {
             Text("Project mappings").font(.title2)
             Text("Map each Linear project to the Clockify project that timers should be logged under.")
                 .foregroundStyle(.secondary)
@@ -256,7 +310,7 @@ private struct ProjectsTab: View {
 
             Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .tabPadding()
         .task(id: selectedWorkspaceId) {
             if let id = selectedWorkspaceId {
                 await loadFor(workspaceId: id)
@@ -289,12 +343,28 @@ private struct ProjectsTab: View {
             if projects.linear.isEmpty {
                 Text("No Linear projects found.").foregroundStyle(.secondary)
             } else {
+                let referenced = referencedProjectIds(for: workspaceId)
+                let unmappedReferencedCount = projects.linear
+                    .filter { referenced.contains($0.id) && (draftMappings[$0.id] ?? "").isEmpty }
+                    .count
+
+                if unmappedReferencedCount > 0 {
+                    Label(
+                        "\(unmappedReferencedCount) project\(unmappedReferencedCount == 1 ? "" : "s") with assigned issues need mapping",
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .foregroundStyle(.orange)
+                    .font(.callout)
+                }
+
                 ScrollView {
                     VStack(spacing: 8) {
                         ForEach(projects.linear) { linearProject in
                             mappingRow(
                                 linearProject: linearProject,
-                                clockifyProjects: projects.clockify
+                                clockifyProjects: projects.clockify,
+                                needsMapping: referenced.contains(linearProject.id)
+                                    && (draftMappings[linearProject.id] ?? "").isEmpty
                             )
                         }
                     }
@@ -307,6 +377,11 @@ private struct ProjectsTab: View {
                     }
                     .keyboardShortcut(.defaultAction)
                     .disabled(isSaving)
+
+                    Button("Auto-match by name") {
+                        autoMatchByName(workspaceId: workspaceId)
+                    }
+                    .help("Pre-fill mappings for Linear projects whose name exactly matches a Clockify project (does not overwrite existing mappings)")
 
                     Button("Refresh project lists") {
                         Task { await loadFor(workspaceId: workspaceId) }
@@ -335,11 +410,23 @@ private struct ProjectsTab: View {
     @ViewBuilder
     private func mappingRow(
         linearProject: LinearProject,
-        clockifyProjects: [ClockifyProject]
+        clockifyProjects: [ClockifyProject],
+        needsMapping: Bool
     ) -> some View {
         HStack {
+            if needsMapping {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .font(.caption)
+                    .help("Linear project has assigned issues but no Clockify mapping")
+            } else {
+                Image(systemName: "circle.fill")
+                    .foregroundStyle(.clear)
+                    .font(.caption)
+            }
+
             Text(linearProject.name)
-                .frame(width: 220, alignment: .leading)
+                .frame(width: 200, alignment: .leading)
 
             Image(systemName: "arrow.right")
                 .foregroundStyle(.secondary)
@@ -359,6 +446,43 @@ private struct ProjectsTab: View {
             }
             .labelsHidden()
         }
+    }
+
+    private func referencedProjectIds(for workspaceId: UUID) -> Set<String> {
+        guard let snapshot = coordinator.snapshots.first(where: { $0.workspaceId == workspaceId }) else {
+            return []
+        }
+        return Set(snapshot.assignedIssues.compactMap(\.projectId))
+    }
+
+    /// Pre-fills draftMappings for any Linear project whose normalized name
+    /// (lowercased + trimmed) matches a Clockify project. Doesn't overwrite
+    /// existing user-chosen mappings - this is a starter, not a steamroller.
+    private func autoMatchByName(workspaceId: UUID) {
+        guard let projects = coordinator.workspaceProjects[workspaceId] else { return }
+        let clockifyByName = Dictionary(
+            grouping: projects.clockify,
+            by: { Self.normalize($0.name) }
+        ).compactMapValues { $0.first }
+
+        var matched = 0
+        for linearProject in projects.linear {
+            let current = draftMappings[linearProject.id] ?? ""
+            if !current.isEmpty { continue }
+            if let match = clockifyByName[Self.normalize(linearProject.name)] {
+                draftMappings[linearProject.id] = match.id
+                matched += 1
+            }
+        }
+
+        if matched > 0 {
+            saveError = nil
+            savedAt = nil
+        }
+    }
+
+    private static func normalize(_ s: String) -> String {
+        s.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func loadFor(workspaceId: UUID) async {
@@ -389,16 +513,17 @@ private struct ProjectsTab: View {
 
 private struct AboutTab: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             Text("tymeline").font(.title)
             Text("Open-source macOS menubar app that syncs Linear issue status to Clockify timers.")
-            Text("Version 0.1.0").foregroundStyle(.secondary)
+                .foregroundStyle(.secondary)
+            Text("Version 0.1.0").foregroundStyle(.tertiary).font(.callout)
             Link(
                 "github.com/darioristic/tymeline",
                 destination: URL(string: "https://github.com/darioristic/tymeline")!
             )
             Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .tabPadding()
     }
 }
