@@ -2,19 +2,21 @@ import Foundation
 import Observation
 import TymelineCore
 
-/// Top-level state holder. Owns the `WorkspaceStorage`, the per-workspace
-/// `WorkspaceController` actors, and the running poll tasks. Mirrors live
-/// `WorkspaceSnapshot` values into `@Observable` properties so SwiftUI and
-/// the menubar can react.
+struct WorkspaceProjects: Equatable, Sendable {
+    var linear: [LinearProject]
+    var clockify: [ClockifyProject]
+}
+
 @MainActor
 @Observable
 final class AppCoordinator {
     var snapshots: [WorkspaceSnapshot] = []
+    var workspaceProjects: [UUID: WorkspaceProjects] = [:]
+    var workspaceMappings: [UUID: [String: String]] = [:]
+    var projectsError: [UUID: String] = [:]
+    var actionError: String?
     var setupError: String?
 
-    /// Imperative callback for non-SwiftUI observers (e.g. NSStatusItem).
-    /// Set once; called on the main actor whenever `snapshots` or
-    /// `setupError` changes.
     @ObservationIgnored
     var onStateChange: (() -> Void)?
 
@@ -26,8 +28,6 @@ final class AppCoordinator {
         self.storage = storage
     }
 
-    /// Load persisted workspaces and start their poll loops. Call once on
-    /// app launch.
     func bootstrap() async {
         do {
             let workspaces = try await storage.load()
@@ -39,8 +39,6 @@ final class AppCoordinator {
         }
     }
 
-    /// Validate the API keys via fetchMe on both services, persist the
-    /// workspace, store the keys in Keychain, and start the poll loop.
     func addWorkspace(name: String, linearKey: String, clockifyKey: String) async throws {
         var workspace = Workspace(name: name)
 
@@ -63,6 +61,56 @@ final class AppCoordinator {
         try await storage.save(existing)
 
         await attachController(for: workspace)
+    }
+
+    func loadProjects(for workspaceId: UUID) async {
+        guard let controller = controllers[workspaceId] else { return }
+        do {
+            let (linear, clockify) = try await controller.fetchProjects()
+            workspaceProjects[workspaceId] = WorkspaceProjects(linear: linear, clockify: clockify)
+            projectsError[workspaceId] = nil
+        } catch {
+            projectsError[workspaceId] = error.localizedDescription
+        }
+    }
+
+    func setProjectMappings(workspaceId: UUID, mappings: [String: String]) async {
+        guard let controller = controllers[workspaceId] else { return }
+        await controller.updateProjectMappings(mappings)
+        workspaceMappings[workspaceId] = mappings
+
+        do {
+            var all = try await storage.load()
+            if let idx = all.firstIndex(where: { $0.id == workspaceId }) {
+                all[idx].projectMappings = mappings
+                all[idx].updatedAt = Date()
+                try await storage.save(all)
+            }
+        } catch {
+            actionError = "Failed to persist mappings: \(error.localizedDescription)"
+        }
+    }
+
+    func startTimer(workspaceId: UUID, issue: LinearIssue) async {
+        guard let controller = controllers[workspaceId] else { return }
+        do {
+            try await controller.startTimer(for: issue)
+            actionError = nil
+        } catch {
+            actionError = error.localizedDescription
+        }
+        onStateChange?()
+    }
+
+    func stopRunningTimer(workspaceId: UUID) async {
+        guard let controller = controllers[workspaceId] else { return }
+        do {
+            try await controller.stopRunningTimer()
+            actionError = nil
+        } catch {
+            actionError = error.localizedDescription
+        }
+        onStateChange?()
     }
 
     var firstRunningSnapshot: WorkspaceSnapshot? {
@@ -98,11 +146,13 @@ final class AppCoordinator {
             }
 
             controllers[workspace.id] = controller
+            workspaceMappings[workspace.id] = workspace.projectMappings
 
             applySnapshot(
                 WorkspaceSnapshot(
                     workspaceId: workspace.id,
                     workspaceName: workspace.name,
+                    assignedIssues: [],
                     runningIssueId: nil,
                     runningIssueIdentifier: nil,
                     runningIssueTitle: nil,

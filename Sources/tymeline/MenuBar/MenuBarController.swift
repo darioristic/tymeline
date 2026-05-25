@@ -49,6 +49,7 @@ final class MenuBarController {
     private func rebuildMenu() {
         let menu = NSMenu()
 
+        // Header
         let headerTitle: String
         if let running = coordinator.firstRunningSnapshot,
            let identifier = running.runningIssueIdentifier,
@@ -59,18 +60,74 @@ final class MenuBarController {
         } else {
             headerTitle = "tymeline (idle)"
         }
-
         let header = NSMenuItem(title: headerTitle, action: nil, keyEquivalent: "")
         header.isEnabled = false
         menu.addItem(header)
 
-        for snapshot in coordinator.snapshots where snapshot.runningIssueId == nil {
-            let line = snapshot.lastErrorDescription != nil
-                ? "\(snapshot.workspaceName): error"
-                : "\(snapshot.workspaceName): idle"
-            let item = NSMenuItem(title: line, action: nil, keyEquivalent: "")
-            item.isEnabled = false
-            menu.addItem(item)
+        // Stop button if anything is running
+        if coordinator.firstRunningSnapshot != nil {
+            for snapshot in coordinator.snapshots where snapshot.runningIssueId != nil {
+                let stopItem = NSMenuItem(
+                    title: "Stop timer (\(snapshot.workspaceName))",
+                    action: #selector(handleStopClick(_:)),
+                    keyEquivalent: ""
+                )
+                stopItem.target = self
+                stopItem.representedObject = WorkspaceRef(id: snapshot.workspaceId)
+                menu.addItem(stopItem)
+            }
+        }
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Per-workspace issue picker
+        for snapshot in coordinator.snapshots {
+            let workspaceHeader = NSMenuItem(title: snapshot.workspaceName, action: nil, keyEquivalent: "")
+            workspaceHeader.isEnabled = false
+            menu.addItem(workspaceHeader)
+
+            if let err = snapshot.lastErrorDescription {
+                let errItem = NSMenuItem(title: "  ⚠ \(err)", action: nil, keyEquivalent: "")
+                errItem.isEnabled = false
+                menu.addItem(errItem)
+            }
+
+            if snapshot.assignedIssues.isEmpty {
+                let empty = NSMenuItem(
+                    title: snapshot.lastPollAt == nil ? "  (loading...)" : "  (no assigned issues)",
+                    action: nil,
+                    keyEquivalent: ""
+                )
+                empty.isEnabled = false
+                menu.addItem(empty)
+            } else {
+                for issue in snapshot.assignedIssues {
+                    let badge = issue.stateType == .started ? "▶" : "·"
+                    let title = "  \(badge) \(issue.identifier) — \(issue.title)"
+                    let item = NSMenuItem(
+                        title: title,
+                        action: #selector(handleIssueClick(_:)),
+                        keyEquivalent: ""
+                    )
+                    item.target = self
+                    item.representedObject = IssueClickContext(
+                        workspaceId: snapshot.workspaceId,
+                        issue: issue
+                    )
+                    if snapshot.runningIssueId == issue.id {
+                        item.state = .on
+                    }
+                    menu.addItem(item)
+                }
+            }
+        }
+
+        // Action error
+        if let actionError = coordinator.actionError {
+            menu.addItem(NSMenuItem.separator())
+            let errItem = NSMenuItem(title: "Error: \(actionError)", action: nil, keyEquivalent: "")
+            errItem.isEnabled = false
+            menu.addItem(errItem)
         }
 
         menu.addItem(NSMenuItem.separator())
@@ -98,4 +155,36 @@ final class MenuBarController {
     @objc private func openSettingsAction() {
         openSettings()
     }
+
+    @objc private func handleIssueClick(_ sender: NSMenuItem) {
+        guard let context = sender.representedObject as? IssueClickContext else { return }
+        let workspaceId = context.workspaceId
+        let issue = context.issue
+        Task { @MainActor in
+            await coordinator.startTimer(workspaceId: workspaceId, issue: issue)
+        }
+    }
+
+    @objc private func handleStopClick(_ sender: NSMenuItem) {
+        guard let ref = sender.representedObject as? WorkspaceRef else { return }
+        let workspaceId = ref.id
+        Task { @MainActor in
+            await coordinator.stopRunningTimer(workspaceId: workspaceId)
+        }
+    }
+}
+
+/// Reference holder for NSMenuItem.representedObject (which needs `Any?`).
+private final class IssueClickContext {
+    let workspaceId: UUID
+    let issue: LinearIssue
+    init(workspaceId: UUID, issue: LinearIssue) {
+        self.workspaceId = workspaceId
+        self.issue = issue
+    }
+}
+
+private final class WorkspaceRef {
+    let id: UUID
+    init(id: UUID) { self.id = id }
 }
