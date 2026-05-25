@@ -7,11 +7,14 @@ final class LinearClientTests {
     let session: URLSession
 
     init() {
+        MockURLProtocol.suiteLock.lock()
+        MockURLProtocol.requestHandler = nil
         session = .mock()
     }
 
     deinit {
         MockURLProtocol.requestHandler = nil
+        MockURLProtocol.suiteLock.unlock()
     }
 
     @Test func fetchMeReturnsViewer() async throws {

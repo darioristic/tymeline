@@ -1,8 +1,26 @@
 import Foundation
 
 /// URLProtocol subclass that intercepts requests and returns a canned response.
-/// Set `MockURLProtocol.requestHandler` before each test; reset to nil in teardown.
+///
+/// Swift Testing runs suites in parallel, so the shared static `requestHandler`
+/// would race across suites. Tests must hold `MockURLProtocol.suiteLock` for
+/// their lifetime to serialize access. The typical pattern in a test class:
+///
+///     init() {
+///         MockURLProtocol.suiteLock.lock()
+///         MockURLProtocol.requestHandler = nil
+///         session = .mock()
+///     }
+///
+///     deinit {
+///         MockURLProtocol.requestHandler = nil
+///         MockURLProtocol.suiteLock.unlock()
+///     }
 final class MockURLProtocol: URLProtocol {
+    /// Held by every test that uses this mock, so suites can't race on the
+    /// shared `requestHandler` slot. Acquire in init, release in deinit.
+    static let suiteLock = NSLock()
+
     nonisolated(unsafe) static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
 
     override class func canInit(with request: URLRequest) -> Bool { true }
