@@ -29,7 +29,7 @@ public struct Workspace: Codable, Identifiable, Equatable, Sendable {
         id: UUID = UUID(),
         name: String,
         colorHex: String = "#7C7C7C",
-        pollIntervalSeconds: Int = 30,
+        pollIntervalSeconds: Int = 10,
         enabled: Bool = true,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),

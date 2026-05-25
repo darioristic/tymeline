@@ -166,6 +166,16 @@ final class MenuBarController {
 
         menu.addItem(NSMenuItem.separator())
 
+        if let latest = coordinator.snapshots.compactMap(\.lastPollAt).max() {
+            let syncItem = NSMenuItem(
+                title: "Synced \(lastSyncString(latest))",
+                action: nil,
+                keyEquivalent: ""
+            )
+            syncItem.isEnabled = false
+            menu.addItem(syncItem)
+        }
+
         let quitItem = NSMenuItem(
             title: "Quit tymeline",
             action: #selector(NSApplication.terminate(_:)),
@@ -293,6 +303,20 @@ final class MenuBarController {
 
     @objc private func openSettingsAction() {
         openSettings()
+    }
+
+    private func lastSyncString(_ date: Date?) -> String {
+        guard let date else { return "never" }
+        let seconds = Int(Date().timeIntervalSince(date))
+        if seconds < 5 { return "just now" }
+        if seconds < 60 { return "\(seconds)s ago" }
+        if seconds < 3600 {
+            let m = seconds / 60
+            return "\(m)m ago"
+        }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter.string(from: date)
     }
 
     @objc private func handleIssueClick(_ sender: NSMenuItem) {

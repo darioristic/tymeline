@@ -6,7 +6,7 @@ import Foundation
 struct WorkspaceTests {
     @Test func defaultsAreReasonable() {
         let ws = Workspace(name: "Work")
-        #expect(ws.pollIntervalSeconds == 30)
+        #expect(ws.pollIntervalSeconds == 10)
         #expect(ws.enabled == true)
         #expect(ws.linearUserId == nil)
         #expect(ws.clockifyWorkspaceId == nil)
