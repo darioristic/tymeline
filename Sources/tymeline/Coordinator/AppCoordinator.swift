@@ -22,16 +22,23 @@ final class AppCoordinator {
 
     private let storage: WorkspaceStorage
     private let notifications: NotificationService
+    private let idleMonitor: IdleMonitor
     private var controllers: [UUID: WorkspaceController] = [:]
     private var pollTasks: [UUID: Task<Void, Never>] = [:]
 
-    init(storage: WorkspaceStorage, notifications: NotificationService = NotificationService()) {
+    init(
+        storage: WorkspaceStorage,
+        notifications: NotificationService = NotificationService(),
+        idleMonitor: IdleMonitor = IdleMonitor()
+    ) {
         self.storage = storage
         self.notifications = notifications
+        self.idleMonitor = idleMonitor
     }
 
     func bootstrap() async {
         await notifications.requestAuthorization()
+        wireIdleMonitor()
         do {
             let workspaces = try await storage.load()
             for workspace in workspaces {
@@ -39,6 +46,48 @@ final class AppCoordinator {
             }
         } catch {
             setupError = "Failed to load workspaces: \(error.localizedDescription)"
+        }
+    }
+
+    private func wireIdleMonitor() {
+        idleMonitor.isAnyTimerRunning = { [weak self] in
+            self?.firstRunningSnapshot != nil
+        }
+        idleMonitor.onWarn = { [weak self] away in
+            guard let identifier = self?.firstRunningSnapshot?.runningIssueIdentifier else { return }
+            self?.notifications.notifyIdleWarn(
+                identifier: identifier,
+                idleMinutes: Self.minutes(away)
+            )
+        }
+        idleMonitor.onAutoStop = { [weak self] away in
+            guard let self else { return }
+            let identifier = self.firstRunningSnapshot?.runningIssueIdentifier ?? "?"
+            self.notifications.notifyError(
+                "Auto-stopped \(identifier) after \(Self.minutes(away)) min idle"
+            )
+            Task { @MainActor in
+                await self.stopAllRunningTimers()
+            }
+        }
+        notifications.onStillActive = { [weak self] in
+            self?.idleMonitor.userConfirmedActive()
+        }
+        notifications.onStopRequested = { [weak self] in
+            Task { @MainActor in
+                await self?.stopAllRunningTimers()
+            }
+        }
+        idleMonitor.start()
+    }
+
+    private static func minutes(_ seconds: TimeInterval) -> Int {
+        Int(seconds / 60)
+    }
+
+    private func stopAllRunningTimers() async {
+        for snapshot in snapshots where snapshot.runningIssueId != nil {
+            await stopRunningTimer(workspaceId: snapshot.workspaceId)
         }
     }
 

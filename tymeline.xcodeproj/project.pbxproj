@@ -13,6 +13,7 @@
 		6715780618A85FEA31EBC87C /* TymelineCore in Frameworks */ = {isa = PBXBuildFile; productRef = F4514F7307ED8D60D4E33144 /* TymelineCore */; };
 		71CA4DDE5A4E973AA989AD6C /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3294E59908DD6A00183B4C4 /* AppCoordinator.swift */; };
 		76A0230F9BB6B34752BEE8A0 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5AD4AB8DD2B52E4E9B2F90 /* NotificationService.swift */; };
+		99B35F185F56824613CC5B1D /* IdleMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47EFE1FE5F508E99D334F724 /* IdleMonitor.swift */; };
 		A5FA1C5B88596E6DCF9C8DD5 /* TymelineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2A2231A9ABDC6F194FE4D5 /* TymelineApp.swift */; };
 		F1E1AA246E9493A19389E75A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC7C2AF3EFAA04522A3B86D /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
@@ -20,6 +21,7 @@
 /* Begin PBXFileReference section */
 		06AABC79D2EDDA5999C97CC1 /* coorpix-time-sync */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "coorpix-time-sync"; path = .; sourceTree = SOURCE_ROOT; };
 		0D8C170A2A631B7F31862E2A /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
+		47EFE1FE5F508E99D334F724 /* IdleMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleMonitor.swift; sourceTree = "<group>"; };
 		4D41519FB8D819E96136B6D3 /* tymeline.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tymeline.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		531CDC431536CC4E079ED114 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		6B5AD4AB8DD2B52E4E9B2F90 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
@@ -65,6 +67,14 @@
 			path = Coordinator;
 			sourceTree = "<group>";
 		};
+		461D41378FE140B913B15F35 /* Idle */ = {
+			isa = PBXGroup;
+			children = (
+				47EFE1FE5F508E99D334F724 /* IdleMonitor.swift */,
+			);
+			path = Idle;
+			sourceTree = "<group>";
+		};
 		5CA47722C73AE50D38F23A1A /* App */ = {
 			isa = PBXGroup;
 			children = (
@@ -105,6 +115,7 @@
 			children = (
 				5CA47722C73AE50D38F23A1A /* App */,
 				37A70DBD5EEE0A3939097C15 /* Coordinator */,
+				461D41378FE140B913B15F35 /* Idle */,
 				609959C910ADB1110F7C0845 /* MenuBar */,
 				27DA936F240A16B9F01211CF /* Notifications */,
 				894ECE337E57203EF3356A5E /* Settings */,
@@ -194,6 +205,7 @@
 			files = (
 				71CA4DDE5A4E973AA989AD6C /* AppCoordinator.swift in Sources */,
 				F1E1AA246E9493A19389E75A /* AppDelegate.swift in Sources */,
+				99B35F185F56824613CC5B1D /* IdleMonitor.swift in Sources */,
 				246139BE684854A9641AF721 /* MenuBarController.swift in Sources */,
 				76A0230F9BB6B34752BEE8A0 /* NotificationService.swift in Sources */,
 				650C547D3514DB705AD01694 /* SettingsView.swift in Sources */,
