@@ -46,7 +46,12 @@ jobs:
           security set-keychain-settings -l -u -t 7200 ci.keychain
 
       - name: Test TymelineCore (SwiftPM)
-        run: swift test
+        # `--parallel` forks each test into its own process; works around a
+        # known Swift Testing runtime hang on Xcode 16 CI runners where the
+        # single-process runner sits on XPC after 'Build complete!' and
+        # never emits results. Wrap in `timeout` so a future regression
+        # fails fast instead of eating the 20-minute workflow budget.
+        run: timeout 600 swift test --parallel
 
       - name: Build app target (xcodebuild)
         run: |
