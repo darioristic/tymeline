@@ -36,6 +36,16 @@ final class UpdaterService: NSObject, SPUUpdaterDelegate, SPUStandardUserDriverD
             updaterDelegate: self,
             userDriverDelegate: self
         )
+        // Sparkle's first scheduled check is delayed by a random fraction
+        // of SUScheduledCheckInterval, which can mean hours before the
+        // user notices a fresh release. Kick off one immediate background
+        // check ~10s after launch (gives the network stack and Sparkle
+        // time to settle), then let the regular interval take over.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+            guard let self else { return }
+            log.info("kicking off initial background update check")
+            self.controller.updater.checkForUpdatesInBackground()
+        }
     }
 
     /// Triggers the manual "Check for Updates..." sheet - same as the user
