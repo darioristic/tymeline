@@ -27,6 +27,8 @@ final class UpdaterService: NSObject, SPUUpdaterDelegate, SPUStandardUserDriverD
     /// controller) can repaint the icon without having to poll.
     var onAvailabilityChange: (@MainActor () -> Void)?
 
+    private var pollTimer: Timer?
+
     override init() {
         super.init()
         // startingUpdater: true wires up the background-check timer using
@@ -36,18 +38,29 @@ final class UpdaterService: NSObject, SPUUpdaterDelegate, SPUStandardUserDriverD
             updaterDelegate: self,
             userDriverDelegate: self
         )
-        // Sparkle's first scheduled check is delayed by a random fraction
-        // of SUScheduledCheckInterval, so even with the interval set to 1h
-        // the user could go hours without seeing a fresh release surfaced
-        // by the badge. Force the schedule to reset shortly after launch -
-        // this causes Sparkle to perform an immediate background check
-        // rather than waiting for the random window. Subsequent checks
-        // fall back to the regular interval from Info.plist.
+        // Sparkle's internal schedule is opaque and can sit silent for an
+        // unpredictable initial window after launch. We poll the updater
+        // ourselves: first call ~5s after launch, then every 60s. Each
+        // call funnels through Sparkle's gentle-reminder path; when the
+        // appcast actually has something newer, didFindValidUpdate fires
+        // and the menubar badge lights up. checkForUpdatesInBackground is
+        // a no-op when offline or when Sparkle's internal session is busy,
+        // so this is safe to call frequently.
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-            guard let self else { return }
-            log.info("resetting Sparkle update cycle to force immediate check")
-            self.controller.updater.resetUpdateCycle()
+            self?.runBackgroundCheck()
         }
+        let timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.runBackgroundCheck()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        pollTimer = timer
+    }
+
+    private func runBackgroundCheck() {
+        log.info("background update check tick")
+        controller.updater.checkForUpdatesInBackground()
     }
 
     /// Triggers the manual "Check for Updates..." sheet - same as the user
