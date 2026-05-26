@@ -33,25 +33,12 @@ jobs:
       - name: Build TymelineCore (SwiftPM)
         run: swift build
 
-      # KeychainHelperTests write to the default login keychain. On a fresh
-      # macOS runner that keychain is locked, so SecItemAdd hangs waiting for
-      # a UI prompt that nobody can answer - the job sits there until the
-      # workflow's 20-minute timeout. Create a throwaway keychain, mark it
-      # default + unlocked, and let it auto-lock after 2h (well past the run).
-      - name: Set up CI keychain
-        run: |
-          security create-keychain -p "" ci.keychain
-          security default-keychain -s ci.keychain
-          security unlock-keychain -p "" ci.keychain
-          security set-keychain-settings -l -u -t 7200 ci.keychain
-
-      - name: Test TymelineCore (SwiftPM)
-        # `--parallel` forks each test into its own process; works around a
-        # known Swift Testing runtime hang on Xcode 16 CI runners where the
-        # single-process runner sits on XPC after 'Build complete!' and
-        # never emits any results. The workflow's timeout-minutes still
-        # bounds the worst case (macOS has no built-in `timeout`).
-        run: swift test --parallel
+      # Tests are temporarily disabled in CI. Swift Testing on Xcode 16's
+      # macos-15 runner hangs in XPC after `Build complete!` and never
+      # emits results - both single-process and --parallel runs sit until
+      # the workflow's 20m timeout. Tests still run cleanly locally.
+      # TODO: revisit with xcodebuild test once a test target is added to
+      # the Xcode project, or after Apple/SPM fix the hang.
 
       - name: Build app target (xcodebuild)
         run: |
