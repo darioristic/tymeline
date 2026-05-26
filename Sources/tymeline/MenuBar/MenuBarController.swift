@@ -50,33 +50,38 @@ final class MenuBarController {
     private func updateButton() {
         guard let button = statusItem.button else { return }
 
-        let baseImage: NSImage?
+        let symbolName: String
+        let updateAvailable = updater.availableUpdateVersion != nil
+
         if let running = coordinator.firstRunningSnapshot,
            let identifier = running.runningIssueIdentifier,
            let title = running.runningIssueTitle {
-            baseImage = NSImage(systemSymbolName: "clock.badge.checkmark", accessibilityDescription: "tymeline running")
+            symbolName = updateAvailable ? "clock.badge.exclamationmark" : "clock.badge.checkmark"
             let elapsed = elapsedString(since: running.runningStartedAt)
             button.title = elapsed.map { " \(identifier) \($0)" } ?? " \(identifier)"
             button.toolTip = "tymeline: \(identifier) \(title)"
         } else if coordinator.hasErrorSnapshot {
-            baseImage = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "tymeline error")
+            symbolName = "exclamationmark.triangle"
             button.title = ""
             button.toolTip = "tymeline: error - see Settings"
         } else {
-            baseImage = NSImage(systemSymbolName: "clock", accessibilityDescription: "tymeline idle")
+            symbolName = updateAvailable ? "clock.badge.exclamationmark" : "clock"
             button.title = ""
             button.toolTip = "tymeline (idle)"
         }
 
-        guard let baseImage else { return }
-        baseImage.isTemplate = true
-
-        if let pendingVersion = updater.availableUpdateVersion {
-            button.image = baseImage.withUpdateBadge()
-            button.image?.isTemplate = false  // we want the red dot to stay red
+        if updateAvailable, let pendingVersion = updater.availableUpdateVersion {
+            // Render the badge variant in palette mode (clock primary, dot red)
+            // and keep the rest of the symbol template-tinted by the menubar.
+            let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "tymeline update available")
+            let config = NSImage.SymbolConfiguration(paletteColors: [.labelColor, .systemRed])
+            button.image = image?.withSymbolConfiguration(config)
+            button.image?.isTemplate = false
             button.toolTip = (button.toolTip ?? "") + " - update to \(pendingVersion) available"
         } else {
-            button.image = baseImage
+            let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "tymeline")
+            image?.isTemplate = true
+            button.image = image
         }
     }
 

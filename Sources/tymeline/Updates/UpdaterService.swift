@@ -1,5 +1,8 @@
 import AppKit
 import Sparkle
+import os
+
+private let log = Logger(subsystem: "app.tymeline", category: "Updater")
 
 /// Thin wrapper around Sparkle's standard updater so the rest of the app
 /// doesn't import Sparkle directly. Created once at launch; checks for
@@ -50,6 +53,7 @@ final class UpdaterService: NSObject, SPUUpdaterDelegate, SPUStandardUserDriverD
 
     nonisolated func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
         let version = item.displayVersionString
+        log.info("didFindValidUpdate: \(version, privacy: .public)")
         Task { @MainActor [weak self] in
             self?.availableUpdateVersion = version
             self?.onAvailabilityChange?()
@@ -57,6 +61,7 @@ final class UpdaterService: NSObject, SPUUpdaterDelegate, SPUStandardUserDriverD
     }
 
     nonisolated func updaterDidNotFindUpdate(_ updater: SPUUpdater, error: any Error) {
+        log.info("updaterDidNotFindUpdate: \(error.localizedDescription, privacy: .public)")
         Task { @MainActor [weak self] in
             self?.availableUpdateVersion = nil
             self?.onAvailabilityChange?()
@@ -79,6 +84,7 @@ final class UpdaterService: NSObject, SPUUpdaterDelegate, SPUStandardUserDriverD
         _ update: SUAppcastItem,
         andInImmediateFocus immediateFocus: Bool
     ) -> Bool {
+        log.info("shouldHandleShowingScheduledUpdate version=\(update.displayVersionString, privacy: .public) immediateFocus=\(immediateFocus, privacy: .public)")
         // immediateFocus == true means the app is foreground and Sparkle
         // can safely show its modal. For a menubar app this is rare, so
         // let Sparkle handle that path; everything else we handle.
@@ -94,6 +100,7 @@ final class UpdaterService: NSObject, SPUUpdaterDelegate, SPUStandardUserDriverD
         state: SPUUserUpdateState
     ) {
         let version = update.displayVersionString
+        log.info("willHandleShowingUpdate version=\(version, privacy: .public) handleShowing=\(handleShowingUpdate, privacy: .public)")
         Task { @MainActor [weak self] in
             self?.availableUpdateVersion = version
             self?.onAvailabilityChange?()
