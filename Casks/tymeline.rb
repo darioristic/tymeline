@@ -1,6 +1,6 @@
 cask "tymeline" do
-  version "0.1.19"
-  sha256 "0521457f198792fb11ff87573dd23a8f3975545c4c8ce82491c29413154ffdfb"
+  version "0.1.20"
+  sha256 "0fe63fdf6078434c76773afe70570361ea66114f883ac4a4383e76cad7fdd386"
 
   url "https://github.com/darioristic/tymeline/releases/download/v#{version}/tymeline-v#{version}-macos.zip"
   name "tymeline"
