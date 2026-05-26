@@ -1,7 +1,7 @@
 # tymeline - Design (v0.2 draft)
 
 **Status:** v0.2 draft, 25.05.2026
-**Author:** Dario Risto
+**Author:** Dario Ristic
 **License:** MIT
 **Reviewers:** Solo (Dario)
 **Target audience:** Individual developers (and small teams) who track time on Linear issues via Clockify and want it automated
@@ -317,7 +317,7 @@ CREATE TABLE preferences (
 - Audit log stays local; user can export but app never uploads
 - All HTTP traffic over TLS, Linear/Clockify both enforce this
 - No background process running as root; sandboxed standard user-space app
-- Code-signed and notarized with Apple Developer ID (current signing identity: Dario Risto - may transition to a project-specific Apple Developer org if/when the project grows)
+- Code-signed and notarized with Apple Developer ID (current signing identity: Dario Ristic - may transition to a project-specific Apple Developer org if/when the project grows)
 - Source code is MIT-licensed and public, so any user can audit before installing
 
 **Trust model:** the user installing the app trusts either (a) the public source code they have audited or built themselves, or (b) the signing identity attached to the released binary. Because there is no central server, the project maintainer cannot see user API keys or time data. This is enforced architecturally, not by policy or promise.
@@ -337,7 +337,7 @@ CREATE TABLE preferences (
   ```
 - **Install (from source):** clone repo, open `tymeline.xcodeproj`, build (no signing required for personal use)
 - **Updates:** Sparkle checks GitHub Releases atom feed on app launch + every 24h, prompts user to install
-- **Code signing:** Apple Developer Program account = Dario's personal subscription ($99/yr). Signing identity "Dario Risto" appears in Gatekeeper dialogs. Migration to a project org Developer ID is a future option, not a v1 requirement.
+- **Code signing:** Apple Developer Program account = Dario's personal subscription ($99/yr). Signing identity "Dario Ristic" appears in Gatekeeper dialogs. Migration to a project org Developer ID is a future option, not a v1 requirement.
 
 ---
 
