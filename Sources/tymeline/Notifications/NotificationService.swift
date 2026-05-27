@@ -99,6 +99,15 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         content.title = title
         content.body = body
         if let categoryId { content.categoryIdentifier = categoryId }
+
+        // Attach the app icon as a thumbnail so it surfaces on the banner
+        // even when macOS's iconservices cache hasn't picked up our bundle
+        // icon (a known issue for fresh / ad-hoc-signed apps).
+        if let iconURL = Self.bundledIconURL,
+           let attachment = try? UNNotificationAttachment(identifier: "appicon", url: iconURL, options: nil) {
+            content.attachments = [attachment]
+        }
+
         let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
         // Use the async API: the completion-handler form inherits @MainActor
         // isolation from this method under Swift 6 strict concurrency, then
@@ -113,6 +122,13 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
             }
         }
     }
+
+    /// Lazily resolved URL to AppIcon.icns inside our bundle. Cached so
+    /// every notification doesn't re-walk Bundle.main.
+    private static let bundledIconURL: URL? = {
+        guard let path = Bundle.main.path(forResource: "AppIcon", ofType: "icns") else { return nil }
+        return URL(fileURLWithPath: path)
+    }()
 
     private func durationString(_ seconds: TimeInterval) -> String {
         let total = max(0, Int(seconds))
