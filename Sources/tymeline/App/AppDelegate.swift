@@ -25,13 +25,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // LSUIElement apps don't get the dock-icon path that normally
-        // primes NSApp.applicationIconImage, so notification banners
-        // draw a blank/template-tinted icon. Load from the .icns file
-        // directly (NSImage(named:) sometimes returns a template-flagged
-        // copy from the asset catalog, which makes NC render it as a
-        // white silhouette) and force isTemplate=false so the full colors
-        // come through.
+        // Launch as a regular app so macOS registers our bundle (including
+        // its icon) with NotificationCenter / Dock / iconservicesd the
+        // normal way, then immediately hide the Dock tile via .accessory.
+        // The Dock icon flashes for a tiny moment but the trade-off is
+        // that NC now actually knows what our app icon looks like - which
+        // LSUIElement=YES blocks because macOS short-circuits the
+        // registration path for menu-bar-only bundles.
+        NSApp.setActivationPolicy(.accessory)
+
         let icon: NSImage? = {
             if let path = Bundle.main.path(forResource: "AppIcon", ofType: "icns"),
                let img = NSImage(contentsOfFile: path) {
