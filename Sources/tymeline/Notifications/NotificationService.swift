@@ -104,7 +104,9 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         // Attach the app icon as a thumbnail so it surfaces on the banner
         // even when macOS's iconservices cache hasn't picked up our bundle
         // icon (a known issue for fresh / ad-hoc-signed apps).
-        if let iconURL = Self.bundledIconURL,
+        // NB: UN MOVES the attachment file into its data store, so we copy
+        // the cached source to a fresh per-notification tmp file each time.
+        if let iconURL = Self.makeAttachmentCopy(),
            let attachment = try? UNNotificationAttachment(identifier: "appicon", url: iconURL, options: nil) {
             content.attachments = [attachment]
         }
@@ -124,11 +126,11 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    /// UN attachments reject .icns silently (the try? swallows the
-    /// SBPListErrorDomain failure), so on first use we render the app
-    /// icon at 256x256 as a PNG in tmp and attach that file URL. Cached
-    /// so subsequent notifications don't re-encode.
-    private static let bundledIconURL: URL? = {
+    /// UN attachments reject .icns silently and *move* (not copy) the
+    /// attached file into UN's private data store on first use. So we
+    /// keep a master PNG in the app's Caches dir and copy it to a fresh
+    /// per-notification tmp file each time post() is called.
+    private static let sourceIconURL: URL? = {
         let icon: NSImage?
         if let path = Bundle.main.path(forResource: "AppIcon", ofType: "icns") {
             icon = NSImage(contentsOfFile: path)
@@ -149,16 +151,33 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
             let png = rep.representation(using: .png, properties: [:])
         else { return nil }
 
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("tymeline-notification-icon.png")
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        let url = cacheDir.appendingPathComponent("tymeline-notification-icon.png")
         do {
-            try png.write(to: url)
+            try png.write(to: url, options: .atomic)
             return url
         } catch {
-            log.error("failed to write notification icon PNG: \(error.localizedDescription, privacy: .public)")
+            log.error("failed to write source notification icon: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }()
+
+    /// Returns a fresh tmp file URL containing a copy of the source icon,
+    /// suitable for handing to UNNotificationAttachment (which then moves
+    /// it into its own data store).
+    private static func makeAttachmentCopy() -> URL? {
+        guard let source = sourceIconURL else { return nil }
+        let tmp = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tymeline-icon-\(UUID().uuidString).png")
+        do {
+            try FileManager.default.copyItem(at: source, to: tmp)
+            return tmp
+        } catch {
+            log.error("failed to copy notification icon: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+    }
 
     private func durationString(_ seconds: TimeInterval) -> String {
         let total = max(0, Int(seconds))
