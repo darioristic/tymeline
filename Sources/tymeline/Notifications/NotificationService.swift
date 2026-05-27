@@ -100,8 +100,15 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         content.body = body
         if let categoryId { content.categoryIdentifier = categoryId }
         let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
-        center.add(request) { error in
-            if let error {
+        // Use the async API: the completion-handler form inherits @MainActor
+        // isolation from this method under Swift 6 strict concurrency, then
+        // UN dispatches the callback from a background queue and trips
+        // libdispatch's main-thread assertion, crashing the app the moment
+        // we post a "Started COO-XXX" notification.
+        Task {
+            do {
+                try await center.add(request)
+            } catch {
                 log.error("notification post failed: \(error.localizedDescription, privacy: .public)")
             }
         }
