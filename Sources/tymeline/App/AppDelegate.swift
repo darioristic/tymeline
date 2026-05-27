@@ -27,9 +27,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // LSUIElement apps don't get the dock-icon path that normally
         // primes NSApp.applicationIconImage, so notification banners
-        // sometimes draw a blank/generic icon. Set it explicitly from
-        // the asset catalog so UN has a concrete NSImage to render.
-        if let icon = NSImage(named: "AppIcon") {
+        // draw a blank/template-tinted icon. Load from the .icns file
+        // directly (NSImage(named:) sometimes returns a template-flagged
+        // copy from the asset catalog, which makes NC render it as a
+        // white silhouette) and force isTemplate=false so the full colors
+        // come through.
+        let icon: NSImage? = {
+            if let path = Bundle.main.path(forResource: "AppIcon", ofType: "icns"),
+               let img = NSImage(contentsOfFile: path) {
+                return img
+            }
+            return NSImage(named: "AppIcon")
+        }()
+        if let icon {
+            icon.isTemplate = false
             NSApp.applicationIconImage = icon
         }
 
