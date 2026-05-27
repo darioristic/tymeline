@@ -41,24 +41,30 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     func notifyStarted(identifier: String, title: String) {
         post(
             id: "start-\(identifier)-\(Date().timeIntervalSince1970)",
+            subtitle: "tymeline",
             title: "Started \(identifier)",
-            body: title
+            body: title,
+            timeSensitive: true
         )
     }
 
     func notifyStopped(identifier: String, duration: TimeInterval) {
         post(
             id: "stop-\(identifier)-\(Date().timeIntervalSince1970)",
+            subtitle: "tymeline",
             title: "Stopped \(identifier)",
-            body: durationString(duration)
+            body: durationString(duration),
+            timeSensitive: true
         )
     }
 
     func notifyError(_ message: String) {
         post(
             id: "error-\(Date().timeIntervalSince1970)",
-            title: "tymeline error",
-            body: message
+            subtitle: "tymeline",
+            title: "Error",
+            body: message,
+            timeSensitive: false
         )
     }
 
@@ -68,9 +74,11 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     func notifyIdleWarn(identifier: String, idleMinutes: Int) {
         post(
             id: "idle-warn-\(identifier)",
+            subtitle: "tymeline",
             title: "Still working on \(identifier)?",
             body: "Idle for \(idleMinutes) min. Timer will auto-stop in 5 min.",
-            categoryId: idleCategoryId
+            categoryId: idleCategoryId,
+            timeSensitive: true
         )
     }
 
@@ -94,12 +102,26 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         center.setNotificationCategories([category])
     }
 
-    private func post(id: String, title: String, body: String, categoryId: String? = nil) {
+    private func post(
+        id: String,
+        subtitle: String? = nil,
+        title: String,
+        body: String,
+        categoryId: String? = nil,
+        timeSensitive: Bool = false
+    ) {
         guard authorized else { return }
         let content = UNMutableNotificationContent()
         content.title = title
+        if let subtitle { content.subtitle = subtitle }
         content.body = body
         if let categoryId { content.categoryIdentifier = categoryId }
+        // .timeSensitive renders the "TIME SENSITIVE" header above the
+        // banner title (like Calendar event reminders) and is allowed to
+        // break through Focus modes when the user has granted permission.
+        if timeSensitive {
+            content.interruptionLevel = .timeSensitive
+        }
 
         // Attach the app icon as a thumbnail so it surfaces on the banner
         // even when macOS's iconservices cache hasn't picked up our bundle

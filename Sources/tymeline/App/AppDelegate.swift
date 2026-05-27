@@ -42,6 +42,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let icon {
             icon.isTemplate = false
             NSApp.applicationIconImage = icon
+            // Force-write the icon onto the bundle itself so NotificationCenter
+            // resolves it via its standard lookup path. NSWorkspace.setIcon
+            // bypasses iconservicesd's stale cache for ad-hoc-signed bundles
+            // by writing the icon directly into the bundle as a "custom icon".
+            NSWorkspace.shared.setIcon(icon, forFile: Bundle.main.bundlePath, options: [])
         }
 
         let settingsController = SettingsWindowController(coordinator: coordinator)
