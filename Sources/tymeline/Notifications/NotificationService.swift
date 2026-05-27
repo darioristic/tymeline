@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 @preconcurrency import UserNotifications
 import os
@@ -123,11 +124,40 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    /// Lazily resolved URL to AppIcon.icns inside our bundle. Cached so
-    /// every notification doesn't re-walk Bundle.main.
+    /// UN attachments reject .icns silently (the try? swallows the
+    /// SBPListErrorDomain failure), so on first use we render the app
+    /// icon at 256x256 as a PNG in tmp and attach that file URL. Cached
+    /// so subsequent notifications don't re-encode.
     private static let bundledIconURL: URL? = {
-        guard let path = Bundle.main.path(forResource: "AppIcon", ofType: "icns") else { return nil }
-        return URL(fileURLWithPath: path)
+        let icon: NSImage?
+        if let path = Bundle.main.path(forResource: "AppIcon", ofType: "icns") {
+            icon = NSImage(contentsOfFile: path)
+        } else {
+            icon = NSImage(named: "AppIcon")
+        }
+        guard let src = icon else { return nil }
+
+        let size = NSSize(width: 256, height: 256)
+        let rendered = NSImage(size: size)
+        rendered.lockFocus()
+        src.draw(in: NSRect(origin: .zero, size: size))
+        rendered.unlockFocus()
+
+        guard
+            let tiff = rendered.tiffRepresentation,
+            let rep = NSBitmapImageRep(data: tiff),
+            let png = rep.representation(using: .png, properties: [:])
+        else { return nil }
+
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tymeline-notification-icon.png")
+        do {
+            try png.write(to: url)
+            return url
+        } catch {
+            log.error("failed to write notification icon PNG: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }()
 
     private func durationString(_ seconds: TimeInterval) -> String {
