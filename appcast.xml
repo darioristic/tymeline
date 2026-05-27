@@ -145,5 +145,12 @@
       <pubDate>Wed, 27 May 2026 06:51:36 +0000</pubDate>
       <enclosure url="https://github.com/darioristic/tymeline/releases/download/v0.1.24/tymeline-v0.1.24-macos.zip" type="application/octet-stream" length="1587532" sparkle:edSignature="YM6peXkFy6kjWWRaU30A1lED93NhkkrMRdE1r5xI/E9voaig3K15pkYiC1mnnD6iRCxx+EVAbngd7J9Dc1C+CQ=="/>
     </item>
+    <item>
+      <title>Version 0.1.25</title>
+      <sparkle:version>0.1.25</sparkle:version>
+      <sparkle:shortVersionString>0.1.25</sparkle:shortVersionString>
+      <pubDate>Wed, 27 May 2026 07:11:01 +0000</pubDate>
+      <enclosure url="https://github.com/darioristic/tymeline/releases/download/v0.1.25/tymeline-v0.1.25-macos.zip" type="application/octet-stream" length="1588914" sparkle:edSignature="lhbakmu7jEeHW5uVtVw/RMi1VS98YCLyRJd77WWNOHIS5djwnMwON5Sl9vsbr+CqiGvcmtfON0EXcPsP5DxyBw=="/>
+    </item>
   </channel>
 </rss>
