@@ -213,6 +213,18 @@ private struct WorkspaceCard: View {
                     )
                 }
                 .font(.caption)
+
+                Toggle(isOn: includeBacklogBinding) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Include backlog issues")
+                            .font(.callout)
+                        Text("Show issues in 'Backlog' state in the menubar list, not just Todo/In Progress.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .toggleStyle(.switch)
+                .controlSize(.small)
             }
             .padding(.vertical, 4)
         }
@@ -278,6 +290,20 @@ private struct WorkspaceCard: View {
     @ViewBuilder
     private func metric(icon: String, label: String) -> some View {
         Label(label, systemImage: icon).foregroundStyle(.secondary)
+    }
+
+    private var includeBacklogBinding: Binding<Bool> {
+        Binding(
+            get: { snapshot.includeBacklog },
+            set: { newValue in
+                Task { @MainActor in
+                    await coordinator.setIncludeBacklog(
+                        workspaceId: snapshot.workspaceId,
+                        value: newValue
+                    )
+                }
+            }
+        )
     }
 }
 

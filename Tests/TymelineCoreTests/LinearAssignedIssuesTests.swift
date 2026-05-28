@@ -170,6 +170,39 @@ final class LinearAssignedIssuesTests {
         #expect(query.contains("assignedIssues"))
         #expect(query.contains("unstarted"))
         #expect(query.contains("started"))
+        #expect(!query.contains("backlog"))
+    }
+
+    @Test func includeBacklogAddsBacklogStateToFilter() async throws {
+        let json = """
+        {"data": {"viewer": {"assignedIssues": {"nodes": []}}}}
+        """.data(using: .utf8)!
+
+        let bodyCapture = BodyCapture()
+
+        MockURLProtocol.requestHandler = { request in
+            if let stream = request.httpBodyStream {
+                bodyCapture.body = Self.readStream(stream)
+            } else {
+                bodyCapture.body = request.httpBody
+            }
+            return (
+                HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!,
+                json
+            )
+        }
+
+        let client = LinearClient(apiKey: "key", urlSession: session)
+        _ = try await client.fetchAssignedIssues(includeBacklog: true)
+
+        let bodyData = try #require(bodyCapture.body)
+        let payload = try #require(
+            try JSONSerialization.jsonObject(with: bodyData) as? [String: Any]
+        )
+        let query = try #require(payload["query"] as? String)
+        #expect(query.contains("backlog"))
+        #expect(query.contains("unstarted"))
+        #expect(query.contains("started"))
     }
 
     private static func readStream(_ stream: InputStream) -> Data {

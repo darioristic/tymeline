@@ -25,6 +25,11 @@ public struct Workspace: Codable, Identifiable, Equatable, Sendable {
     /// timer start request will fail (Clockify often requires a project).
     public var projectMappings: [String: String]
 
+    /// When true, the Linear poll includes issues with state type `backlog`
+    /// in addition to `unstarted` + `started`. Default false to keep the
+    /// menu focused on what you're actually working on.
+    public var includeBacklog: Bool
+
     public init(
         id: UUID = UUID(),
         name: String,
@@ -36,7 +41,8 @@ public struct Workspace: Codable, Identifiable, Equatable, Sendable {
         linearUserId: String? = nil,
         clockifyWorkspaceId: String? = nil,
         clockifyUserId: String? = nil,
-        projectMappings: [String: String] = [:]
+        projectMappings: [String: String] = [:],
+        includeBacklog: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -49,6 +55,7 @@ public struct Workspace: Codable, Identifiable, Equatable, Sendable {
         self.clockifyWorkspaceId = clockifyWorkspaceId
         self.clockifyUserId = clockifyUserId
         self.projectMappings = projectMappings
+        self.includeBacklog = includeBacklog
     }
 
     enum CodingKeys: String, CodingKey {
@@ -56,10 +63,11 @@ public struct Workspace: Codable, Identifiable, Equatable, Sendable {
         case createdAt, updatedAt
         case linearUserId, clockifyWorkspaceId, clockifyUserId
         case projectMappings
+        case includeBacklog
     }
 
     /// Custom decoder so older `workspaces.json` files without
-    /// `projectMappings` still load (default to `[:]`).
+    /// `projectMappings` / `includeBacklog` still load with defaults.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try c.decode(UUID.self, forKey: .id)
@@ -73,5 +81,6 @@ public struct Workspace: Codable, Identifiable, Equatable, Sendable {
         self.clockifyWorkspaceId = try c.decodeIfPresent(String.self, forKey: .clockifyWorkspaceId)
         self.clockifyUserId = try c.decodeIfPresent(String.self, forKey: .clockifyUserId)
         self.projectMappings = try c.decodeIfPresent([String: String].self, forKey: .projectMappings) ?? [:]
+        self.includeBacklog = try c.decodeIfPresent(Bool.self, forKey: .includeBacklog) ?? false
     }
 }

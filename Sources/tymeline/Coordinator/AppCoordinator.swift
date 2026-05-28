@@ -151,6 +151,28 @@ final class AppCoordinator {
         }
     }
 
+    /// Toggle the per-workspace "include backlog" filter. Persists to disk,
+    /// updates the in-memory controller, and triggers an immediate poll so
+    /// the menu / Settings card reflect the new issue set without waiting
+    /// for the next scheduled poll tick.
+    func setIncludeBacklog(workspaceId: UUID, value: Bool) async {
+        guard let controller = controllers[workspaceId] else { return }
+        await controller.updateIncludeBacklog(value)
+
+        do {
+            var all = try await storage.load()
+            if let idx = all.firstIndex(where: { $0.id == workspaceId }) {
+                all[idx].includeBacklog = value
+                all[idx].updatedAt = Date()
+                try await storage.save(all)
+            }
+        } catch {
+            actionError = "Failed to persist backlog setting: \(error.localizedDescription)"
+        }
+
+        _ = try? await controller.poll()
+    }
+
     func setProjectMappings(workspaceId: UUID, mappings: [String: String]) async {
         guard let controller = controllers[workspaceId] else { return }
         await controller.updateProjectMappings(mappings)
@@ -281,7 +303,8 @@ final class AppCoordinator {
                     runningIssueTitle: nil,
                     runningStartedAt: nil,
                     lastErrorDescription: nil,
-                    lastPollAt: nil
+                    lastPollAt: nil,
+                    includeBacklog: workspace.includeBacklog
                 )
             )
 

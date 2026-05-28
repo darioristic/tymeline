@@ -70,15 +70,19 @@ public actor LinearClient {
         return response.projects.nodes
     }
 
-    /// Fetches issues assigned to the current user in `unstarted` or `started`
-    /// states - the candidate set for the auto-timer. Ordered by most recently
-    /// updated (Linear's default).
-    public func fetchAssignedIssues() async throws -> [LinearIssue] {
+    /// Fetches issues assigned to the current user. Default filter is
+    /// `unstarted` + `started` (the candidate set for the auto-timer); pass
+    /// `includeBacklog: true` to also include backlog issues. Ordered by most
+    /// recently updated (Linear's default).
+    public func fetchAssignedIssues(includeBacklog: Bool = false) async throws -> [LinearIssue] {
+        let stateTypes = includeBacklog
+            ? "[\"backlog\", \"unstarted\", \"started\"]"
+            : "[\"unstarted\", \"started\"]"
         let query = """
         query MyAssignedIssues {
           viewer {
             assignedIssues(
-              filter: { state: { type: { in: ["unstarted", "started"] } } }
+              filter: { state: { type: { in: \(stateTypes) } } }
             ) {
               nodes {
                 id

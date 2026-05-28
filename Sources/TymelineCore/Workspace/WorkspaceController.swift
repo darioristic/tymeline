@@ -35,6 +35,7 @@ public struct WorkspaceSnapshot: Sendable, Equatable {
     public let runningStartedAt: Date?
     public let lastErrorDescription: String?
     public let lastPollAt: Date?
+    public let includeBacklog: Bool
 
     public init(
         workspaceId: UUID,
@@ -45,7 +46,8 @@ public struct WorkspaceSnapshot: Sendable, Equatable {
         runningIssueTitle: String?,
         runningStartedAt: Date?,
         lastErrorDescription: String?,
-        lastPollAt: Date?
+        lastPollAt: Date?,
+        includeBacklog: Bool = false
     ) {
         self.workspaceId = workspaceId
         self.workspaceName = workspaceName
@@ -56,6 +58,7 @@ public struct WorkspaceSnapshot: Sendable, Equatable {
         self.runningStartedAt = runningStartedAt
         self.lastErrorDescription = lastErrorDescription
         self.lastPollAt = lastPollAt
+        self.includeBacklog = includeBacklog
     }
 }
 
@@ -120,7 +123,8 @@ public actor WorkspaceController {
             runningIssueTitle: runningIssueMetadata?.title,
             runningStartedAt: runningStartedAt,
             lastErrorDescription: lastError?.localizedDescription,
-            lastPollAt: lastPollAt
+            lastPollAt: lastPollAt,
+            includeBacklog: workspace.includeBacklog
         )
     }
 
@@ -184,7 +188,9 @@ public actor WorkspaceController {
             throw WorkspaceControllerError.linearUserNotResolved
         }
         do {
-            let issues = try await linearClient.fetchAssignedIssues()
+            let issues = try await linearClient.fetchAssignedIssues(
+                includeBacklog: workspace.includeBacklog
+            )
             assignedIssues = issues
             lastPollAt = Date()
             lastError = nil
@@ -292,6 +298,16 @@ public actor WorkspaceController {
     /// responsible for persisting via WorkspaceStorage.
     public func updateProjectMappings(_ mappings: [String: String]) {
         workspace.projectMappings = mappings
+        workspace.updatedAt = Date()
+        onSnapshotChange?(snapshot())
+    }
+
+    /// Toggle the backlog filter. The next poll() will pick up the new value;
+    /// callers that want an immediate UI refresh should `try? await poll()`
+    /// right after.
+    public func updateIncludeBacklog(_ value: Bool) {
+        guard workspace.includeBacklog != value else { return }
+        workspace.includeBacklog = value
         workspace.updatedAt = Date()
         onSnapshotChange?(snapshot())
     }
